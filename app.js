@@ -15,7 +15,7 @@
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
   function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { } }
   const S = load();
-  S.days = S.days || {}; S.streak = S.streak || 0; S.best = S.best || 0; S.last = S.last || ''; S.played = S.played || 0; S.totalScore = S.totalScore || 0; S.freeze = S.freeze || 0; S.byType = S.byType || {}; S.badges = S.badges || []; S.xp = S.xp || 0; S.lv = S.lv || { stars: {} }; if (S.snd === undefined) S.snd = true; if (S.hap === undefined) S.hap = true;
+  S.days = S.days || {}; S.streak = S.streak || 0; S.best = S.best || 0; S.last = S.last || ''; S.played = S.played || 0; S.totalScore = S.totalScore || 0; S.freeze = S.freeze || 0; S.byType = S.byType || {}; S.badges = S.badges || []; S.xp = S.xp || 0; S.lv = S.lv || { stars: {} }; if (S.hints === undefined) S.hints = 3; if (S.snd === undefined) S.snd = true; if (S.hap === undefined) S.hap = true;
 
   function setBusy(b) { busy = b; if (!b && pendingReload) location.reload(); }
   const app = $('#app');
@@ -66,7 +66,7 @@
       <div class="orb"><span class="lvo">${nextLevel()}</span></div>
       <p class="eyebrow w c">Level ${nextLevel()}${isBoss(nextLevel()) ? ' · Boss' : ''}</p>
       <button class="play" id="go">Play</button>
-      <p class="hint">${st ? '🔥 ' + st + ' day streak · ' : ''}★ ${totalStars()}${done ? ' · next daily in <b id="cd"></b>' : ''}</p>
+      <p class="hint">${st ? '🔥 ' + st + ' day streak · ' : ''}★ ${totalStars()} · 💡 ${S.hints}${done ? ' · next daily in <b id="cd"></b>' : ''}</p>
       <div class="mini m3"><button class="tile t3" id="dly"><b>📅 Daily</b><span>${done ? day.score + '/5 done' : (day && day.i > 0 ? 'Continue' : '5 puzzles')}</span></button><button class="tile t1" id="hard"><b>⚡ Hard</b><span>${hday && hday.done ? hday.score + '/5 done' : (hday && hday.i > 0 ? 'Continue' : 'Daily')}</span></button><button class="tile t2" id="prac"><b>🎯 Practice</b><span>Endless</span></button></div>
     </section>`));
     $('#go').onclick = () => { sfx('tap'); playLevel(nextLevel()); };
@@ -90,7 +90,8 @@
       if (k === 2 && intro) kind = intro[0];
       if (k === 2 && isBoss(L)) kind = 'sudoku';
       const hard = L >= 70 ? true : L >= 40 ? (L + k) % 3 !== 0 : L >= 15 ? (L + k) % 3 === 0 : (isBoss(L) && L >= 25);
-      out.push(BL.practice('level|' + L + '|' + k, kind, hard, L <= 6));
+      const pz = BL.practice('level|' + L + '|' + k, kind, hard, L <= 6); if (k === 2 && intro && !isBoss(L)) pz.isNew = true; if (L === 1 && k === 0) pz.coach = 'Find the pattern, then tap the number that comes next.'; if (L === 2 && k === 0) pz.coach = 'Two out of three right clears a level. Stars come from clean answers.';
+      out.push(pz);
     }
     return out;
   }
@@ -102,16 +103,16 @@
   }
   function levelDone(L, res) {
     setBusy(false); playing(false);
-    const right = res.filter(r => r === 2).length, pass = right >= 2, stars = pass ? right : 0, prev = S.lv.stars[L] || 0;
+    const right = res.filter(r => r === 2).length, okc = res.filter(r => r >= 1).length, pass = okc >= 2, stars = pass ? Math.max(1, right) : 0, prev = S.lv.stars[L] || 0; let gotHint = false;
     let bonus = 0, up = null;
-    if (pass) { if (stars > prev) { bonus = 15 + 10 * (stars - prev) + (isBoss(L) && !prev ? 40 : 0); const bef = levelOf(S.xp).lvl; S.xp += bonus; if (levelOf(S.xp).lvl > bef) up = levelOf(S.xp); S.lv.stars[L] = stars; } }
+    if (pass) { if (stars > prev) { bonus = 15 + 10 * (stars - prev) + (isBoss(L) && !prev ? 40 : 0); const bef = levelOf(S.xp).lvl; S.xp += bonus; if (levelOf(S.xp).lvl > bef) up = levelOf(S.xp); S.lv.stars[L] = stars; if (stars === 3) { S.hints++; gotHint = true; } } }
     save(S); awardBadges();
     const nl = nextLevel();
     app.innerHTML = '';
     app.appendChild(el(`<section class="hero2 tall win"><p class="eyebrow w">${isBoss(L) ? 'Boss level ' : 'Level '}${L}</p>
       <h1>${pass ? (stars === 3 ? 'Perfect!' : 'Level clear!') : 'So close!'}</h1>
       <div class="stars">${[0, 1, 2].map(k => `<b class="${k < stars ? 'on' : ''}" style="animation-delay:${k * .2}s">★</b>`).join('')}</div>
-      <p class="sub w">${pass ? (bonus ? '+' + bonus + ' bonus XP' : 'Already cleared. Go for 3 stars.') : 'You need 2 of 3 right. Try again.'}</p>
+      <p class="sub w">${pass ? (bonus ? '+' + bonus + ' bonus XP' + (gotHint ? ' · +1 💡 hint' : '') : 'Already cleared. Go for 3 stars.') : 'You need 2 of 3. Hints count, but only clean answers earn stars.'}</p>
       ${xpBar(true)}
       <div class="acts col">${pass ? `<button class="btn light big" id="nl">Level ${nl}</button>` : `<button class="btn light big" id="rt">Retry</button>`}<button class="btn ghost" id="mp">Map</button>${pass && stars < 3 ? '<button class="btn ghost" id="rt">Retry for 3 stars</button>' : ''}</div></section>`));
     sfx(pass ? 'win' : 'bad'); if (pass) confetti(stars === 3 ? 70 : 35);
@@ -122,17 +123,22 @@
     window.scrollTo(0, 0);
   }
   function viewLevels() {
-    const cur = nextLevel(), top = cur + 6; app.innerHTML = '';
-    const sec = el(`<section class="map"><div class="hbar">${xpBar()}</div></section>`);
+    const cur = nextLevel(), top = Math.max(12, cur + 6); app.innerHTML = '';
+    const GAP = 128, PAD = 90, H = top * GAP + PAD * 2;
+    const sec = el(`<section class="map"><div class="hbar">${xpBar()}<span class="hintc">💡 ${S.hints}</span></div><div class="mapin" style="height:${H}px"><svg class="mpath" width="100%" height="${H}"></svg></div></section>`);
+    const inn = sec.querySelector('.mapin'), pts = [];
     for (let L = 1; L <= top; L++) {
-      if (L === 1 || (L - 1) % 10 === 0) sec.appendChild(el(`<div class="world">World ${Math.floor((L - 1) / 10) + 1}</div>`));
       const st = S.lv.stars[L] || 0, open = L <= cur, boss = isBoss(L);
-      const x = Math.round(Math.sin(L * 0.85) * 70);
-      const n = el(`<div class="lrow" style="transform:translateX(${x}px)"><button class="node${L === cur ? ' cur' : ''}${st ? ' done' : ''}${boss ? ' boss' : ''}${open ? '' : ' lock'}" ${open ? '' : 'disabled'} aria-label="Level ${L}${open ? '' : ' locked'}">${open ? (boss ? '👑' : L) : '🔒'}</button><div class="nst">${[0, 1, 2].map(k => `<b class="${k < st ? 'on' : ''}">★</b>`).join('')}</div></div>`);
+      const x = Math.round(Math.sin(L * 0.85) * 70), y = H - PAD - (L - 1) * GAP;
+      pts.push([x, y]);
+      if (L === 1 || (L - 1) % 10 === 0) inn.appendChild(el(`<div class="world" style="top:${y + 70}px">World ${Math.floor((L - 1) / 10) + 1}</div>`));
+      const n = el(`<div class="lrow" style="top:${y - 40}px;left:calc(50% + ${x}px)">${L === cur ? '<div class="you">YOU</div>' : ''}<button class="node${L === cur ? ' cur' : ''}${st ? ' done' : ''}${boss ? ' boss' : ''}${open ? '' : ' lock'}" ${open ? '' : 'disabled'} aria-label="Level ${L}${open ? '' : ' locked'}">${open ? (boss ? '👑' : L) : '🔒'}</button><div class="nst">${[0, 1, 2].map(k => `<b class="${k < st ? 'on' : ''}">★</b>`).join('')}</div></div>`);
       if (open) n.querySelector('.node').onclick = () => { sfx('tap'); playLevel(L); };
-      sec.appendChild(n);
+      inn.appendChild(n);
     }
     app.appendChild(sec);
+    const W = inn.clientWidth || 376, svg = sec.querySelector('.mpath');
+    svg.innerHTML = '<polyline fill="none" stroke="rgba(255,255,255,.22)" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 14" points="' + pts.map(p => (W / 2 + p[0]) + ',' + p[1]).join(' ') + '"/>';
     const c = sec.querySelector('.node.cur'); if (c) setTimeout(() => c.scrollIntoView({ block: 'center' }), 30);
   }
 
@@ -289,13 +295,13 @@
     playing(true); app.innerHTML = '';
     const t0 = Date.now(); let tmr;
     const wrap = el(`<section class="puzzle g"><div class="ptop"><button class="x" id="exit" aria-label="Back">✕</button>${dotsHtml || '<div class="dots"></div>'}<span class="cmb" id="cmb"></span></div>
-      <div class="pmeta"><span>${esc(label)}</span><span id="tm">0s</span></div>
-      <h2>${esc(p.title)}</h2><p class="sub">${esc(p.prompt)}</p><div id="body"></div><div id="fb"></div></section>`);
+      <div class="pmeta"><span>${esc(label)}${p.isNew ? ' <em class="newb">NEW TYPE</em>' : ''}</span><span id="tm">0s</span></div>
+      <h2>${esc(p.title)}</h2><p class="sub">${esc(p.prompt)}</p>${p.coach ? '<div class="coach">💡 ' + esc(p.coach) + '</div>' : ''}<div id="body"></div><div id="fb"></div></section>`);
     app.appendChild(wrap); window.scrollTo(0, 0);
     const showCombo = () => { const c = $('#cmb'); if (c) c.innerHTML = combo >= 2 ? '🔥 x' + combo : ''; }; showCombo();
     tmr = setInterval(() => { const e = $('#tm'); if (!e) { clearInterval(tmr); return; } e.textContent = Math.floor((Date.now() - t0) / 1000) + 's'; }, 500);
     $('#exit').onclick = () => { clearInterval(tmr); setBusy(false); onExit ? onExit() : go('today'); };
-    const body = $('#body'), fb = $('#fb');
+    const body = $('#body'), fb = $('#fb'); let hinted = false, hintFn = null;
     function next(score, ok, extra) {
       clearInterval(tmr); const secs = Math.floor((Date.now() - t0) / 1000);
       buzz(ok ? 15 : [30, 40, 30]); sfx(ok ? 'ok' : 'bad');
@@ -305,7 +311,7 @@
       if (p.hard || S.hp && isPractice) gain = Math.round(gain * 1.5);
       if (gain) { const bef = levelOf(S.xp).lvl; S.xp += gain; const L = levelOf(S.xp); if (L.lvl > bef) lvlUpInfo = L; floatXp('+' + gain + ' XP' + note, ''); if (score === 2) confetti(combo >= 3 ? 36 : 18); }
       if (curDay) curDay.xp = (curDay.xp || 0) + gain;
-      save(S); showCombo();
+      save(S); showCombo(); if (!ok) { wrap.classList.remove('shk'); void wrap.offsetWidth; wrap.classList.add('shk'); } const hb = $('#hint'); if (hb) hb.remove();
       fb.innerHTML = `<div class="fb ${ok ? 'good' : 'bad'}"><b>${ok ? (combo >= 3 ? 'Combo x' + combo + '!' : 'Correct!') : 'Not quite.'}</b> ${esc(extra || p.explain)}</div><button class="btn primary big" id="nx">${isPractice ? 'Next' : 'Continue'}</button>`;
       $('#nx').onclick = () => { sfx('tap'); if (lvlUpInfo) { const L = lvlUpInfo; lvlUpInfo = null; levelUp(L, () => onDone(score)); } else onDone(score); };
       $('#nx').focus(); setTimeout(() => { const n = $('#nx'); n && n.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 60);
@@ -320,11 +326,13 @@
         b.onclick = () => {
           opts.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.textContent === p.answer) x.classList.add('right'); });
           const ok = o === p.answer; if (!ok) b.classList.add('wrong');
-          next(ok ? 2 : 0, ok);
+          next(ok ? (hinted ? 1 : 2) : 0, ok);
         };
         opts.appendChild(b);
       });
       body.appendChild(opts);
+      hintFn = () => { const wr = [...opts.querySelectorAll('button')].filter(x => x.textContent !== p.answer && !x.disabled); wr.sort(() => Math.random() - .5).slice(0, Math.max(1, Math.min(2, wr.length - 1))).forEach(x => { x.disabled = true; x.classList.add('gone'); }); };
+      if (p.coach && L1glow()) { const rb = [...opts.querySelectorAll('button')].find(x => x.textContent === p.answer); if (rb) rb.classList.add('glow'); }
     } else {
       const g = p.grid.map(r => r.slice()); const fixed = p.grid.map(r => r.map(v => v !== 0));
       let sel = null, wrongChecks = 0, finished = false;
@@ -353,11 +361,17 @@
         if (empty) { msg.textContent = empty + ' cell' + (empty > 1 ? 's' : '') + ' still empty.'; return; }
         if (wrong) { wrongChecks++; buzz([30, 40, 30]); msg.textContent = wrong + ' cell' + (wrong > 1 ? 's are' : ' is') + ' wrong. Try again.'; return; }
         finished = true; chk.remove(); setBusy(false);
-        next(wrongChecks ? 1 : 2, true, wrongChecks ? 'Solved after ' + wrongChecks + ' wrong check' + (wrongChecks > 1 ? 's' : '') + '.' : 'Solved with no wrong checks.');
+        next(wrongChecks || hinted ? 1 : 2, true, wrongChecks ? 'Solved after ' + wrongChecks + ' wrong check' + (wrongChecks > 1 ? 's' : '') + '.' : 'Solved with no wrong checks.');
       };
       body.appendChild(board); body.appendChild(padEl); body.appendChild(msg); body.appendChild(chk); draw();
+      hintFn = () => { const cells = []; g.forEach((row, r) => row.forEach((x, c) => { if (!fixed[r][c] && x !== p.solution[r][c]) cells.push([r, c]); })); if (!cells.length) return; const [r, c] = cells[Math.floor(Math.random() * cells.length)]; g[r][c] = p.solution[r][c]; fixed[r][c] = true; sel = null; draw(); msg.textContent = 'Hint: one cell filled in.'; };
+    }
+    if (hintFn) {
+      const hb = el(`<button class="hintb" id="hint">💡 Hint <b>${S.hints}</b></button>`); wrap.appendChild(hb);
+      hb.onclick = () => { if (hinted || S.hints <= 0) { toast(S.hints <= 0 ? 'No hints left. Earn one with a 3-star level.' : 'One hint per puzzle.'); return; } hinted = true; S.hints--; save(S); hintFn(); sfx('tap'); hb.innerHTML = '💡 Hint used'; hb.disabled = true; };
     }
   }
+  function L1glow() { return Object.keys(S.lv.stars).length === 0; }
 
   // Updates: install once, then update silently. Never reload mid-puzzle.
   if ('serviceWorker' in navigator) {
