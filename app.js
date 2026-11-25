@@ -15,31 +15,43 @@
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
   function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { } }
   const S = load();
-  S.days = S.days || {}; S.streak = S.streak || 0; S.best = S.best || 0; S.last = S.last || ''; S.played = S.played || 0; S.totalScore = S.totalScore || 0; S.freeze = S.freeze || 0; S.byType = S.byType || {}; S.badges = S.badges || [];
+  S.days = S.days || {}; S.streak = S.streak || 0; S.best = S.best || 0; S.last = S.last || ''; S.played = S.played || 0; S.totalScore = S.totalScore || 0; S.freeze = S.freeze || 0; S.byType = S.byType || {}; S.badges = S.badges || []; S.xp = S.xp || 0; S.lv = S.lv || { stars: {} }; if (S.snd === undefined) S.snd = true; if (S.hap === undefined) S.hap = true;
 
   function setBusy(b) { busy = b; if (!b && pendingReload) location.reload(); }
   const app = $('#app');
   function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; }
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-  function buzz(n) { try { if (navigator.vibrate) navigator.vibrate(n); } catch (e) { } }
+  function buzz(n) { try { if (S.hap && navigator.vibrate) navigator.vibrate(n); } catch (e) { } }
+  let AC;
+  function tone(f, d, type, delay, vol) { if (!S.snd) return; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t0 = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain(); o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(vol || .1, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + d); o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + d + .02); } catch (e) { } }
+  function sfx(k) { if (k === 'ok') { tone(660, .14, 'triangle'); tone(990, .2, 'triangle', .09); } else if (k === 'bad') { tone(190, .26, 'sawtooth', 0, .06); } else if (k === 'tap') { tone(520, .05, 'sine', 0, .05); } else if (k === 'lvl') { [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', i * .11)); } else if (k === 'win') { [523, 659, 784].forEach((f, i) => tone(f, .18, 'triangle', i * .09)); } }
+  const TITLES = ['Rookie', 'Thinker', 'Solver', 'Sharp', 'Ace', 'Whiz', 'Master', 'Champion', 'Legend'];
+  function levelOf(xp) { let l = 1, need = 80; while (xp >= need) { xp -= need; l++; need = 80 + 25 * (l - 1); } return { lvl: l, into: xp, need, title: TITLES[Math.min(l - 1, TITLES.length - 1)] }; }
+  function confetti(n) { const cols = ['#ff6b8b', '#ffd23f', '#22c55e', '#3b82f6', '#a78bfa', '#ff7a45']; const box = document.createElement('div'); box.className = 'confetti'; for (let i = 0; i < (n || 40); i++) { const p = document.createElement('i'); p.style.cssText = `left:${Math.random() * 100}%;background:${cols[i % 6]};--dx:${(Math.random() * 160 - 80).toFixed(0)}px;--r:${(Math.random() * 720 - 360).toFixed(0)}deg;animation-delay:${(Math.random() * .25).toFixed(2)}s;animation-duration:${(1.1 + Math.random() * .8).toFixed(2)}s`; box.appendChild(p); } document.body.appendChild(box); setTimeout(() => box.remove(), 2400); }
+  function floatXp(txt, cls) { const f = el(`<div class="xpf ${cls || ''}">${esc(txt)}</div>`); document.body.appendChild(f); setTimeout(() => f.remove(), 1200); }
+  function levelUp(info, done) { sfx('lvl'); buzz([20, 30, 40]); confetti(60); const o = el(`<div class="ov"><div class="ovc"><p class="eyebrow w">Level up</p><div class="lvbig">${info.lvl}</div><h2>${info.title}</h2><p class="sub w">Keep it going.</p><button class="btn light" id="ovok">Nice</button></div></div>`); document.body.appendChild(o); o.querySelector('#ovok').onclick = () => { o.remove(); done(); }; }
+  function xpBar(compact) { const L = levelOf(S.xp); return `<div class="lvl${compact ? ' c' : ''}"><span class="lvn">Lv ${L.lvl}</span><div class="xpb"><u style="width:${Math.round(L.into / L.need * 100)}%"></u></div><span class="xpt">${L.into}/${L.need} XP</span></div>`; }
+  let combo = 0, curDay = null, lvlUpInfo = null;
   function playing(on) { document.body.classList.toggle('playing', !!on); }
+  document.body.classList.add('game');
 
   /* ---------- shell: bottom tabs ---------- */
   const ICONS = {
     today: '<svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>',
     practice: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
     stats: '<svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-7"/></svg>',
+    levels: '<svg viewBox="0 0 24 24"><path d="M5 20c0-4 14-3 14-8S8 9 12 4"/><circle cx="5" cy="20" r="1.6"/><circle cx="12" cy="4" r="1.6"/></svg>',
     learn: '<svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 1 2-2h13"/></svg>'
   };
   const nav = el('<nav class="tabs" aria-label="Main"></nav>');
-  [['today', 'Today'], ['practice', 'Practice'], ['stats', 'Stats'], ['learn', 'Learn']].forEach(([k, label]) => {
+  [['today', 'Home'], ['levels', 'Levels'], ['practice', 'Practice'], ['stats', 'Stats'], ['learn', 'Learn']].forEach(([k, label]) => {
     const b = el(`<button data-t="${k}" aria-label="${label}">${ICONS[k]}<span>${label}</span></button>`);
     b.onclick = () => { if (busy && !confirm('Leave this puzzle? Your progress on it will be lost.')) return; go(k); };
     nav.appendChild(b);
   });
   document.body.appendChild(nav);
   function markTab() { nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); }
-  function go(k) { tab = k; setBusy(false); playing(false); markTab(); ({ today: viewToday, practice: viewPractice, stats: viewStats, learn: viewLearn })[k](); window.scrollTo(0, 0); }
+  function go(k) { tab = k; document.body.classList.toggle('tab-learn', k === 'learn'); combo = 0; setBusy(false); playing(false); markTab(); ({ today: viewToday, levels: viewLevels, practice: viewPractice, stats: viewStats, learn: viewLearn })[k](); window.scrollTo(0, 0); }
 
   /* ---------- Today ---------- */
   function streakNow() { const t = today(); if (S.last === t || S.last === addDays(t, -1)) return S.streak; if (S.last === addDays(t, -2) && S.freeze > 0) return S.streak; return 0; }
@@ -48,25 +60,80 @@
     const t = today(), n = dayNum(t), day = S.days[t], hday = S.days[t + 'h'];
     const done = day && day.done, st = streakNow();
     app.innerHTML = '';
-    app.appendChild(el(`<section class="hero2">
-      <div class="row"><p class="eyebrow w">Daily set #${n}</p><span class="pill">${st} day streak${S.freeze ? ' · 1 freeze' : ''}</span></div>
-      <h1>${done ? 'Done for today.' : (day && day.i > 0 ? 'Pick up where you left off.' : 'Five puzzles. A few calm minutes.')}</h1>
-      <p class="sub w">${done ? 'You scored ' + day.score + ' out of 5. A new set opens at midnight.' : 'Patterns, logic, numbers and a mini sudoku. Same set for everyone today.'}</p>
-      <button class="btn light" id="go">${done ? 'See result' : (day && day.i > 0 ? 'Continue' : 'Start today\'s set')}</button>
-      ${done ? '<p class="sub w next">Next set in <b id="cd"></b></p>' : ''}
+    const prog = [0, 1, 2, 3, 4].map(k => { const r = day && day.res ? day.res[k] : undefined; return '<i class="' + (r === 2 ? 'ok' : r === 1 ? 'half' : r === 0 ? 'bad' : (!done && day && day.i === k ? 'cur' : '')) + '"></i>'; }).join('');
+    app.appendChild(el(`<section class="home">
+      <div class="hbar">${xpBar()}<button class="ibtn" id="snd" aria-label="Sound ${S.snd ? 'on' : 'off'}">${S.snd ? '🔊' : '🔇'}</button></div>
+      <div class="orb"><span class="lvo">${nextLevel()}</span></div>
+      <p class="eyebrow w c">Level ${nextLevel()}${isBoss(nextLevel()) ? ' · Boss' : ''}</p>
+      <button class="play" id="go">Play</button>
+      <p class="hint">${st ? '🔥 ' + st + ' day streak · ' : ''}★ ${totalStars()}${done ? ' · next daily in <b id="cd"></b>' : ''}</p>
+      <div class="mini m3"><button class="tile t3" id="dly"><b>📅 Daily</b><span>${done ? day.score + '/5 done' : (day && day.i > 0 ? 'Continue' : '5 puzzles')}</span></button><button class="tile t1" id="hard"><b>⚡ Hard</b><span>${hday && hday.done ? hday.score + '/5 done' : (hday && hday.i > 0 ? 'Continue' : 'Daily')}</span></button><button class="tile t2" id="prac"><b>🎯 Practice</b><span>Endless</span></button></div>
     </section>`));
-    app.appendChild(el(`<section class="card row2"><div><h2>Hard set</h2><p class="sub">Tougher versions of the same five.</p></div>
-      <button class="btn" id="hard">${hday && hday.done ? hday.score + '/5' : (hday && hday.i > 0 ? 'Continue' : 'Play')}</button></section>`));
-    if (!(window.matchMedia && matchMedia('(display-mode: standalone)').matches) && !S.hideInstall) {
-      app.appendChild(el(`<section class="card tip"><div><b>Add to Home Screen</b><p class="sub">Open your browser menu and choose Add to Home Screen. It then opens like an app, works offline and updates itself.</p></div><button class="link" id="hideTip">Got it</button></section>`));
-      $('#hideTip').onclick = () => { S.hideInstall = 1; save(S); viewToday(); };
-    }
-    const wk = [];
-    for (let i = 6; i >= 0; i--) { const d = addDays(t, -i), x = S.days[d]; wk.push(`<i class="${x && x.done ? (x.score >= 4 ? 'ok' : x.score >= 2.5 ? 'half' : 'bad') : ''}${i === 0 ? ' now' : ''}"><b>${'SMTWTFS'[parse(d).getDay()]}</b></i>`); }
-    app.appendChild(el(`<section class="card"><h2>This week</h2><div class="week">${wk.join('')}</div></section>`));
-    $('#go').onclick = () => daily(false, t);
-    $('#hard').onclick = () => daily(true, t);
+    $('#go').onclick = () => { sfx('tap'); playLevel(nextLevel()); };
+    $('#dly').onclick = () => { sfx('tap'); daily(false, t); };
+    $('#hard').onclick = () => { sfx('tap'); daily(true, t); };
+    $('#prac').onclick = () => { sfx('tap'); go('practice'); };
+    $('#snd').onclick = () => { S.snd = !S.snd; save(S); sfx('tap'); viewToday(); };
     countdown();
+  }
+
+  /* ---------- Levels ---------- */
+  const LTYPES = [['seq', 1], ['odd', 2], ['math', 3], ['letters', 5], ['order', 7], ['grid', 9], ['ops', 12], ['shapes', 15]];
+  function isBoss(L) { return L >= 10 && L % 5 === 0; }
+  function nextLevel() { let L = 1; while (S.lv.stars[L]) L++; return L; }
+  function totalStars() { return Object.keys(S.lv.stars).reduce((q, k) => q + S.lv.stars[k], 0); }
+  function levelPuzzles(L) {
+    const av = LTYPES.filter(x => x[1] <= L), intro = LTYPES.filter(x => x[1] === L)[0];
+    const out = [];
+    for (let k = 0; k < 3; k++) {
+      let kind = av[(L * 3 + k * 2 + Math.floor(L / 3)) % av.length][0];
+      if (k === 2 && intro) kind = intro[0];
+      if (k === 2 && isBoss(L)) kind = 'sudoku';
+      const hard = L >= 70 ? true : L >= 40 ? (L + k) % 3 !== 0 : L >= 15 ? (L + k) % 3 === 0 : (isBoss(L) && L >= 25);
+      out.push(BL.practice('level|' + L + '|' + k, kind, hard, L <= 6));
+    }
+    return out;
+  }
+  function playLevel(L) {
+    const ps = levelPuzzles(L), res = []; curDay = null; let i = 0;
+    (function step() {
+      showPuzzle(ps[i], dots(res, i, 3), (isBoss(L) ? '👑 ' : '') + 'Level ' + L + ' · ' + (i + 1) + '/3', score => { res[i] = score; i++; if (i >= 3) levelDone(L, res); else step(); }, false, () => go('today'));
+    })();
+  }
+  function levelDone(L, res) {
+    setBusy(false); playing(false);
+    const right = res.filter(r => r === 2).length, pass = right >= 2, stars = pass ? right : 0, prev = S.lv.stars[L] || 0;
+    let bonus = 0, up = null;
+    if (pass) { if (stars > prev) { bonus = 15 + 10 * (stars - prev) + (isBoss(L) && !prev ? 40 : 0); const bef = levelOf(S.xp).lvl; S.xp += bonus; if (levelOf(S.xp).lvl > bef) up = levelOf(S.xp); S.lv.stars[L] = stars; } }
+    save(S); awardBadges();
+    const nl = nextLevel();
+    app.innerHTML = '';
+    app.appendChild(el(`<section class="hero2 tall win"><p class="eyebrow w">${isBoss(L) ? 'Boss level ' : 'Level '}${L}</p>
+      <h1>${pass ? (stars === 3 ? 'Perfect!' : 'Level clear!') : 'So close!'}</h1>
+      <div class="stars">${[0, 1, 2].map(k => `<b class="${k < stars ? 'on' : ''}" style="animation-delay:${k * .2}s">★</b>`).join('')}</div>
+      <p class="sub w">${pass ? (bonus ? '+' + bonus + ' bonus XP' : 'Already cleared. Go for 3 stars.') : 'You need 2 of 3 right. Try again.'}</p>
+      ${xpBar(true)}
+      <div class="acts col">${pass ? `<button class="btn light big" id="nl">Level ${nl}</button>` : `<button class="btn light big" id="rt">Retry</button>`}<button class="btn ghost" id="mp">Map</button>${pass && stars < 3 ? '<button class="btn ghost" id="rt">Retry for 3 stars</button>' : ''}</div></section>`));
+    sfx(pass ? 'win' : 'bad'); if (pass) confetti(stars === 3 ? 70 : 35);
+    if (up) setTimeout(() => levelUp(up, () => { }), 900);
+    const nlb = $('#nl'); if (nlb) nlb.onclick = () => { sfx('tap'); playLevel(nl); };
+    const rtb = $('#rt'); if (rtb) rtb.onclick = () => { sfx('tap'); playLevel(L); };
+    $('#mp').onclick = () => go('levels');
+    window.scrollTo(0, 0);
+  }
+  function viewLevels() {
+    const cur = nextLevel(), top = cur + 6; app.innerHTML = '';
+    const sec = el(`<section class="map"><div class="hbar">${xpBar()}</div></section>`);
+    for (let L = 1; L <= top; L++) {
+      if (L === 1 || (L - 1) % 10 === 0) sec.appendChild(el(`<div class="world">World ${Math.floor((L - 1) / 10) + 1}</div>`));
+      const st = S.lv.stars[L] || 0, open = L <= cur, boss = isBoss(L);
+      const x = Math.round(Math.sin(L * 0.85) * 70);
+      const n = el(`<div class="lrow" style="transform:translateX(${x}px)"><button class="node${L === cur ? ' cur' : ''}${st ? ' done' : ''}${boss ? ' boss' : ''}${open ? '' : ' lock'}" ${open ? '' : 'disabled'} aria-label="Level ${L}${open ? '' : ' locked'}">${open ? (boss ? '👑' : L) : '🔒'}</button><div class="nst">${[0, 1, 2].map(k => `<b class="${k < st ? 'on' : ''}">★</b>`).join('')}</div></div>`);
+      if (open) n.querySelector('.node').onclick = () => { sfx('tap'); playLevel(L); };
+      sec.appendChild(n);
+    }
+    app.appendChild(sec);
+    const c = sec.querySelector('.node.cur'); if (c) setTimeout(() => c.scrollIntoView({ block: 'center' }), 30);
   }
 
   /* ---------- Practice ---------- */
@@ -88,6 +155,8 @@
     const dist = [0, 0, 0, 0, 0, 0]; done.forEach(k => dist[Math.min(5, Math.floor(S.days[k].score))]++);
     const mx = Math.max(1, ...dist);
     app.innerHTML = '';
+    app.appendChild(el(`<section class="card"><h2>Settings</h2><label class="tg"><input type="checkbox" id="osnd"${S.snd ? ' checked' : ''}> Sound effects</label><label class="tg"><input type="checkbox" id="ohap"${S.hap ? ' checked' : ''}> Vibration</label>${!(window.matchMedia && matchMedia('(display-mode: standalone)').matches) ? '<p class="sub" style="margin-top:12px">Tip: use your browser menu, Add to Home Screen. It then opens like an app, works offline and updates itself.</p>' : ''}</section>`));
+    $('#osnd').onchange = e => { S.snd = e.target.checked; save(S); sfx('ok'); }; $('#ohap').onchange = e => { S.hap = e.target.checked; save(S); buzz(30); };
     app.appendChild(el(`<section class="card"><h1 class="h1s">Your stats</h1><div class="stats">
       <div class="stat"><b>${streakNow()}</b><span>Streak</span></div><div class="stat"><b>${S.best}</b><span>Best</span></div>
       <div class="stat"><b>${S.played}</b><span>Sets</span></div><div class="stat"><b>${S.played ? (S.totalScore / S.played).toFixed(1) : '0'}</b><span>Avg /5</span></div></div>
@@ -117,14 +186,14 @@
   }
 
   /* ---------- Sets ---------- */
-  function dots(results, i) {
-    return '<div class="dots">' + [0, 1, 2, 3, 4].map(k => { const r = results[k]; const c = r === 2 ? 'ok' : r === 1 ? 'half' : r === 0 ? 'bad' : (k === i ? 'cur' : ''); return '<i class="' + c + '"></i>'; }).join('') + '</div>';
+  function dots(results, i, n) {
+    return '<div class="dots">' + Array.from({ length: n || 5 }, (_, q) => q).map(k => { const r = results[k]; const c = r === 2 ? 'ok' : r === 1 ? 'half' : r === 0 ? 'bad' : (k === i ? 'cur' : ''); return '<i class="' + c + '"></i>'; }).join('') + '</div>';
   }
   function daily(hard, date) {
     const t = today(), key = hard ? date + 'h' : date; const set = BL.dailySet(date, hard);
     const day = S.days[key] = S.days[key] || { i: 0, res: [], done: false };
     if (day.done) return summary(date, hard);
-    const isArchive = date !== t;
+    const isArchive = date !== t; curDay = day;
     showPuzzle(set[day.i], dots(day.res, day.i), (isArchive ? 'Archive · ' : '') + (hard ? 'Hard · ' : '') + `Puzzle ${day.i + 1} of 5`, score => {
       day.res[day.i] = score; day.i++;
       if (day.i >= 5) finishDay(date, day, hard, isArchive);
@@ -133,6 +202,7 @@
   }
   function finishDay(t, day, hard, isArchive) {
     day.done = true;
+    { const bef = levelOf(S.xp).lvl; const bonus = (hard ? 40 : 20) + (day.res.every(r => r === 2) ? 30 : 0); S.xp += bonus; day.xp = (day.xp || 0) + bonus; day.bonus = bonus; if (levelOf(S.xp).lvl > bef) day.lvlUp = levelOf(S.xp); }
     const pts = day.res.reduce((a, r) => a + (r === 2 ? 1 : r === 1 ? 0.5 : 0), 0);
     day.score = pts;
     if (hard) { S.hardPlayed = (S.hardPlayed || 0) + 1; S.hardTotal = (S.hardTotal || 0) + pts; return; }
@@ -149,14 +219,21 @@
   function awardBadges() { const fresh = BADGES.filter(b => b[2]() && S.badges.indexOf(b[0]) < 0); fresh.forEach(b => S.badges.push(b[0])); save(S); if (fresh.length) setTimeout(() => toast('Badge earned: ' + fresh[0][1]), 500); }
 
   function summary(t, hard) {
-    setBusy(false); playing(false);
+    setBusy(false); playing(false); combo = 0;
     const day = S.days[hard ? t + 'h' : t]; const n = dayNum(t); const isToday = t === today();
     const sq = day.res.map(r => `<i class="${r === 2 ? 'ok' : r === 1 ? 'half' : 'bad'}"></i>`).join('');
+    const stars = day.score >= 5 ? 3 : day.score >= 3.5 ? 2 : day.score >= 2 ? 1 : 0;
     app.innerHTML = '';
-    app.appendChild(el(`<section class="hero2 tall"><p class="eyebrow w">${hard ? 'Hard set' : 'Daily set'} #${n}</p><h1 class="big">${day.score}<small>/5</small></h1>
-      <p class="sq">${sq}</p><p class="sub w">Green: first try. Yellow: sudoku with a wrong check. Red: missed.${hard || !isToday ? '' : ` Streak: <b>${S.streak}</b>.`}</p>
-      <div class="acts"><button class="btn light" id="share">Share card</button><button class="btn ghost" id="copy">Copy text</button><button class="btn ghost" id="back">Home</button></div>
+    app.appendChild(el(`<section class="hero2 tall win"><p class="eyebrow w">${hard ? 'Hard set' : 'Daily set'} #${n}</p>
+      <div class="stars">${[0, 1, 2].map(k => `<b class="${k < stars ? 'on' : ''}" style="animation-delay:${k * .18}s">★</b>`).join('')}</div>
+      <h1 class="big">${day.score}<small>/5</small></h1>
+      <p class="sq">${sq}</p>
+      <p class="xpgain">+${day.xp || 0} XP${hard || !isToday ? '' : ' · 🔥 ' + S.streak + ' day streak'}</p>
+      ${xpBar(true)}
+      <div class="acts"><button class="btn light big" id="share">Share card</button><button class="btn ghost" id="copy">Copy text</button><button class="btn ghost" id="back">Home</button></div>
       ${isToday ? '<p class="sub w next">Next set in <b id="cd"></b></p>' : ''}</section>`));
+    if (day.score >= 4) { sfx('win'); confetti(day.score === 5 ? 70 : 40); }
+    if (day.lvlUp) { const L = day.lvlUp; day.lvlUp = null; save(S); setTimeout(() => levelUp(L, () => { }), 900); }
     countdown();
     const url = PUBLIC_URL;
     const em = day.res.map(r => r === 2 ? '🟩' : r === 1 ? '🟨' : '🟥').join('');
@@ -204,23 +281,34 @@
 
   function practice(kind, n) {
     const seed = 'practice|' + Date.now() + '|' + n + '|' + Math.random();
-    const p = BL.practice(seed, kind, !!S.hp);
+    curDay = null; const p = BL.practice(seed, kind, !!S.hp);
     showPuzzle(p, '', 'Practice · puzzle ' + (n + 1) + (S.hp ? ' · hard' : ''), () => practice(kind, n + 1), true, () => go('practice'));
   }
 
   function showPuzzle(p, dotsHtml, label, onDone, isPractice, onExit) {
     playing(true); app.innerHTML = '';
-    const wrap = el(`<section class="card puzzle"><div class="top"><button class="link" id="exit">‹ Back</button><span class="eyebrow">${esc(label)}</span></div>${dotsHtml}
+    const t0 = Date.now(); let tmr;
+    const wrap = el(`<section class="puzzle g"><div class="ptop"><button class="x" id="exit" aria-label="Back">✕</button>${dotsHtml || '<div class="dots"></div>'}<span class="cmb" id="cmb"></span></div>
+      <div class="pmeta"><span>${esc(label)}</span><span id="tm">0s</span></div>
       <h2>${esc(p.title)}</h2><p class="sub">${esc(p.prompt)}</p><div id="body"></div><div id="fb"></div></section>`);
     app.appendChild(wrap); window.scrollTo(0, 0);
-    $('#exit').onclick = () => { setBusy(false); onExit ? onExit() : go('today'); };
+    const showCombo = () => { const c = $('#cmb'); if (c) c.innerHTML = combo >= 2 ? '🔥 x' + combo : ''; }; showCombo();
+    tmr = setInterval(() => { const e = $('#tm'); if (!e) { clearInterval(tmr); return; } e.textContent = Math.floor((Date.now() - t0) / 1000) + 's'; }, 500);
+    $('#exit').onclick = () => { clearInterval(tmr); setBusy(false); onExit ? onExit() : go('today'); };
     const body = $('#body'), fb = $('#fb');
     function next(score, ok, extra) {
-      buzz(ok ? 15 : [30, 40, 30]);
-      { const bt = S.byType[p.type] = S.byType[p.type] || { n: 0, ok: 0 }; bt.n++; if (score === 2) bt.ok++; save(S); }
-      fb.innerHTML = `<div class="fb ${ok ? 'good' : 'bad'}"><b>${ok ? 'Correct' : 'Not quite'}.</b> ${esc(extra || p.explain)}</div><button class="btn primary" id="nx">${isPractice ? 'Next puzzle' : 'Continue'}</button>`;
-      $('#nx').onclick = () => onDone(score);
-      $('#nx').focus();
+      clearInterval(tmr); const secs = Math.floor((Date.now() - t0) / 1000);
+      buzz(ok ? 15 : [30, 40, 30]); sfx(ok ? 'ok' : 'bad');
+      { const bt = S.byType[p.type] = S.byType[p.type] || { n: 0, ok: 0 }; bt.n++; if (score === 2) bt.ok++; }
+      let gain = 0, note = '';
+      if (score === 2) { combo++; gain = 10 + Math.min(combo - 1, 5) * 2; if (secs < 10) { gain += 5; note = ' ⚡'; } } else if (score === 1) { gain = 5; combo = 0; } else combo = 0;
+      if (p.hard || S.hp && isPractice) gain = Math.round(gain * 1.5);
+      if (gain) { const bef = levelOf(S.xp).lvl; S.xp += gain; const L = levelOf(S.xp); if (L.lvl > bef) lvlUpInfo = L; floatXp('+' + gain + ' XP' + note, ''); if (score === 2) confetti(combo >= 3 ? 36 : 18); }
+      if (curDay) curDay.xp = (curDay.xp || 0) + gain;
+      save(S); showCombo();
+      fb.innerHTML = `<div class="fb ${ok ? 'good' : 'bad'}"><b>${ok ? (combo >= 3 ? 'Combo x' + combo + '!' : 'Correct!') : 'Not quite.'}</b> ${esc(extra || p.explain)}</div><button class="btn primary big" id="nx">${isPractice ? 'Next' : 'Continue'}</button>`;
+      $('#nx').onclick = () => { sfx('tap'); if (lvlUpInfo) { const L = lvlUpInfo; lvlUpInfo = null; levelUp(L, () => onDone(score)); } else onDone(score); };
+      $('#nx').focus(); setTimeout(() => { const n = $('#nx'); n && n.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 60);
     }
     if (p.type !== 'sudoku') {
       setBusy(false);
@@ -228,7 +316,7 @@
       if (p.show) body.appendChild(el(`<div class="show ${p.type}">${esc(p.show)}</div>`));
       const opts = el(`<div class="opts c${p.cols || 2}"></div>`);
       p.options.forEach(o => {
-        const b = el(`<button class="opt">${esc(o)}</button>`);
+        const b = el(`<button class="opt">${esc(o)}</button>`); b.onpointerdown = () => sfx('tap');
         b.onclick = () => {
           opts.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.textContent === p.answer) x.classList.add('right'); });
           const ok = o === p.answer; if (!ok) b.classList.add('wrong');

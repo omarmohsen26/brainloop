@@ -21,8 +21,8 @@
     return shuffle(r, [...set]).map(String);
   }
 
-  function sequence(r, h) {
-    const kind = h ? pick(r, ['quad', 'altmul', 'cube', 'primes', 'alt2', 'fib']) : pick(r, ['add', 'mult', 'alt', 'square', 'tri', 'fib', 'addmul']);
+  function sequence(r, h, easy) {
+    const kind = easy ? pick(r, ['add', 'add', 'mult', 'alt']) : h ? pick(r, ['quad', 'altmul', 'cube', 'primes', 'alt2', 'fib']) : pick(r, ['add', 'mult', 'alt', 'square', 'tri', 'fib', 'addmul']);
     let t = [], why = '';
     if (kind === 'add') { const a = ri(r, 2, 30), d = ri(r, 3, 13); t = [0, 1, 2, 3, 4, 5].map(i => a + d * i); why = 'Each number is ' + d + ' more than the one before.'; }
     else if (kind === 'mult') { const a = ri(r, 1, 4), m = pick(r, [2, 3]); t = [0, 1, 2, 3, 4, 5].map(i => a * Math.pow(m, i)); why = 'Each number is ' + m + ' times the one before.'; }
@@ -185,7 +185,7 @@
     const A = r() < 0.5, B = r() < 0.5, C = r() < 0.5;
     return [A ? sequence(r, h) : letters(r, h), ordering(r, h), B ? oddOne(r, h) : grid(r, h), (C ? (r() < 0.5 ? mental(r, h) : operators(r, h)) : shapes(r, h)), sudoku(r, h)];
   }
-  function practice(seedStr, kind, h) { const r = rng(hash(seedStr)); const ks = Object.keys(makers); return makers[kind && makers[kind] ? kind : pick(r, ks)](r, h); }
+  function practice(seedStr, kind, h, easy) { const r = rng(hash(seedStr)); const ks = Object.keys(makers); return makers[kind && makers[kind] ? kind : pick(r, ks)](r, h, easy); }
   root.BL = { dailySet, practice, hash, rng };
   if (typeof module !== 'undefined') module.exports = root.BL;
 })(typeof window !== 'undefined' ? window : globalThis);

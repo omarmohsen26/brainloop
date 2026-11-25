@@ -1,7 +1,7 @@
 import os, json
 from PIL import Image, ImageDraw
 OUT = os.path.dirname(os.path.abspath(__file__))
-VERSION = "1.6.0"
+VERSION = "1.8.0"
 
 CSS = """
 :root{--bg:#f6f4ee;--ink:#1d1b2e;--mut:#5d5a70;--card:#fff;--line:#e4e0d4;--acc:#4f46e5;--acc2:#eef0ff;--ok:#16a34a;--bad:#dc2626;--half:#d9a400}
@@ -82,6 +82,85 @@ article{padding-top:6px}article p,article li{color:var(--ink)}article .ex{backgr
 a{color:var(--acc)}
 button:focus-visible,a:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+body.has-tabs{--bg:#14122b;--ink:#fff;--mut:#b9b5e0;--card:#232050;--line:#38347a;--acc:#8b7bff;--acc2:#2f2b68;background:radial-gradient(120% 60% at 50% -10%,#3b2fa8 0%,#14122b 60%) fixed,#14122b;color:#fff}
+html:has(body.has-tabs){background:#14122b}body.has-tabs{min-height:100vh}
+body.has-tabs header.bar,body.has-tabs footer,body.has-tabs main{display:none}
+body.has-tabs.tab-learn footer,body.has-tabs.tab-learn main{display:block}
+body.has-tabs.playing .tabs{display:none}body.has-tabs.playing{padding-bottom:24px}
+.home{padding-top:8px;text-align:center}
+.hbar{display:flex;align-items:center;gap:10px;padding:10px 0}
+.lvl{flex:1;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800}.lvn{background:#ffd23f;color:#3a2a00;border-radius:999px;padding:4px 10px}
+.xpb{flex:1;height:12px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}.xpb u{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#22c55e,#a3e635);transition:width .6s}
+.xpt{color:var(--mut);font-weight:700}.lvl.c{margin:8px 0 14px}
+.ibtn{border:0;background:rgba(255,255,255,.12);border-radius:14px;width:46px;height:46px;font-size:20px;cursor:pointer}
+.orb{width:128px;height:128px;margin:20px auto 10px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a99bff,#5b3df0 60%,#2a1d9a);display:flex;align-items:center;justify-content:center;font-size:60px;box-shadow:0 14px 40px rgba(91,61,240,.55),inset 0 -8px 18px rgba(0,0,0,.25);animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.eyebrow.c{text-align:center;margin-top:8px}
+.prog{display:flex;gap:8px;justify-content:center;margin:12px 0 22px}.prog i{width:38px;height:10px;border-radius:99px;background:rgba(255,255,255,.18)}
+.prog i.ok{background:#22c55e}.prog i.half{background:#facc15}.prog i.bad{background:#ef4444}.prog i.cur{background:#fff}
+.play{display:block;width:100%;font:inherit;font-size:34px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#fff;border:0;border-radius:28px;padding:26px 0;background:linear-gradient(#34d27b,#16a34a);box-shadow:0 9px 0 #0d6a2f,0 18px 36px rgba(22,163,74,.4);cursor:pointer;animation:pulse 2s ease-in-out infinite}
+.play:active{transform:translateY(7px);box-shadow:0 2px 0 #0d6a2f}
+@keyframes pulse{50%{transform:scale(1.025)}}
+.hint{color:var(--mut);margin:20px 0 14px;font-weight:600}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.tile{font:inherit;color:#fff;border:0;border-radius:22px;padding:18px 8px;display:flex;flex-direction:column;gap:2px;cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.3)}.tile b{font-size:19px}.tile span{font-size:12px;opacity:.85}
+.tile.t1{background:#ff7a45}.tile.t2{background:#3b82f6}.tile:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.puzzle.g{padding-top:6px;animation:rise .25s ease-out}
+.ptop{display:flex;align-items:center;gap:10px}.ptop .dots{flex:1;margin:0}.dots i{height:10px;border-radius:99px;background:rgba(255,255,255,.18)}
+.x{font:inherit;border:0;background:rgba(255,255,255,.12);color:#fff;width:40px;height:40px;border-radius:12px;font-size:16px;cursor:pointer}
+.cmb{min-width:54px;text-align:right;font-weight:900;color:#ffd23f}
+.pmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);font-weight:700;margin:10px 0 0;text-transform:uppercase;letter-spacing:.06em}
+.puzzle.g h2{font-size:26px;margin:.5em 0 .1em}.puzzle.g .sub{margin:0 0 14px}
+body.has-tabs .show{background:rgba(255,255,255,.1);font-size:28px;border-radius:20px;padding:24px 12px}
+body.has-tabs .g3 i{background:rgba(255,255,255,.1);border-radius:16px;font-size:30px;padding:20px 0}body.has-tabs .g3 i.q{background:#8b7bff}
+.opts{gap:12px}
+body.has-tabs .opt{border:0;border-radius:22px;min-height:88px;font-size:26px;color:#fff;box-shadow:0 7px 0 rgba(0,0,0,.3);transition:transform .08s,box-shadow .08s,opacity .2s}
+.opt:nth-child(4n+1){background:#6c5ce7}.opt:nth-child(4n+2){background:#0ea5a0}.opt:nth-child(4n+3){background:#f97316}.opt:nth-child(4n+4){background:#3b82f6}
+.opt:active{transform:translateY(5px);box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.opts.c5 .opt{min-height:74px}
+body.has-tabs .opt.right{background:#22c55e!important;animation:pop .5s}body.has-tabs .opt.wrong{background:#ef4444!important;animation:shake .4s}
+.opt:disabled:not(.right):not(.wrong){opacity:.3}
+@keyframes pop{30%{transform:scale(1.1)}60%{transform:scale(.97)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.fb{border-radius:18px;animation:rise .25s ease-out;font-size:15px}
+.fb.good{background:rgba(34,197,94,.2)}.fb.bad{background:rgba(239,68,68,.2)}
+.btn.big{width:100%;font-size:20px;padding:16px;border-radius:20px;box-shadow:0 6px 0 rgba(0,0,0,.3)}
+body.has-tabs .btn.primary{background:#22c55e;border-color:#22c55e;box-shadow:0 6px 0 #0d6a2f}
+body.has-tabs .btn.primary:active{transform:translateY(4px)}
+body.has-tabs .key{border:0;background:#3b3799;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+body.has-tabs .cell{background:#2b2766;color:#cfc8ff;border-color:#4a45a0}body.has-tabs .cell.fx{background:#3d3890;color:#fff}body.has-tabs .sg{border-color:#fff}
+body.has-tabs .cell.rb{border-right-color:#fff}body.has-tabs .cell.bb{border-bottom-color:#fff}
+body.has-tabs .card{box-shadow:0 4px 0 rgba(0,0,0,.18)}
+body.has-tabs .btn{background:#2f2b68;color:#fff;border-color:#4a45a0}
+body.has-tabs .btn.light{background:#fff;color:#2f2890}body.has-tabs .btn.ghost{background:rgba(255,255,255,.14)}
+body.has-tabs .chip{background:#2f2b68;color:#fff;border:0;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+body.has-tabs .tabs{background:rgba(20,18,43,.94);border-top:1px solid #38347a}
+.win .stars{font-size:54px;letter-spacing:6px}.stars b{display:inline-block;color:rgba(255,255,255,.2);transform:scale(.6)}.stars b.on{color:#ffd23f;animation:starin .5s both;text-shadow:0 0 24px rgba(255,210,63,.7)}
+@keyframes starin{0%{transform:scale(0) rotate(-90deg)}70%{transform:scale(1.35)}100%{transform:scale(1)}}
+.xpgain{font-weight:800;font-size:18px;margin:.4em 0 0;color:#ffd23f}
+.win .sq{justify-content:center}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:10px;height:16px;border-radius:2px;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translate(var(--dx),105vh) rotate(var(--r));opacity:.9}}
+.xpf{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:31;font-size:30px;font-weight:900;color:#ffd23f;text-shadow:0 3px 0 rgba(0,0,0,.4);pointer-events:none;animation:flt 1.1s ease-out forwards}
+@keyframes flt{from{opacity:1;transform:translate(-50%,0) scale(.7)}30%{transform:translate(-50%,-20px) scale(1.2)}to{opacity:0;transform:translate(-50%,-90px) scale(1)}}
+.ov{position:fixed;inset:0;z-index:40;background:rgba(10,8,30,.82);display:flex;align-items:center;justify-content:center;padding:24px;animation:rise .2s}
+.ovc{background:linear-gradient(145deg,#6a5cf5,#2f2890);border-radius:28px;padding:30px 36px;text-align:center;color:#fff;animation:pop .6s;min-width:260px}
+.lvbig{font-size:110px;font-weight:900;line-height:1;color:#ffd23f;text-shadow:0 6px 0 rgba(0,0,0,.3)}
+
+.lvo{font-size:64px;font-weight:900;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+.mini.m3{grid-template-columns:repeat(3,1fr);gap:10px}.mini.m3 .tile b{font-size:16px}.tile.t3{background:#0ea5a0}
+.acts.col{flex-direction:column;align-items:stretch;margin-top:14px}.acts.col .btn{width:100%}
+.map{padding-top:4px;text-align:center;overflow-x:hidden}body.has-tabs{overflow-x:hidden}.world{margin:22px 0 6px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;font-size:12px;color:#ffd23f}
+.lrow{display:flex;flex-direction:column;align-items:center;margin:10px 0 14px}
+.node{font:inherit;font-size:26px;font-weight:900;color:#fff;width:74px;height:74px;border-radius:50%;border:0;background:#3b3799;box-shadow:0 7px 0 rgba(0,0,0,.35);cursor:pointer}
+.node.done{background:#22c55e;box-shadow:0 7px 0 #0d6a2f}.node.cur{background:#ff7a45;box-shadow:0 7px 0 #a84a1f,0 0 0 6px rgba(255,122,69,.3);animation:pulse 1.8s ease-in-out infinite}
+.node.boss{width:88px;height:88px;background:linear-gradient(#ffd23f,#e09b00);color:#3a2a00;font-size:34px;box-shadow:0 7px 0 #8a5e00}.node.lock{background:#2a2760;opacity:.7;box-shadow:0 5px 0 rgba(0,0,0,.3);cursor:default;font-size:22px}
+.node:active:not(:disabled){transform:translateY(5px)}
+.nst{margin-top:8px;font-size:15px;letter-spacing:2px}.nst b{color:rgba(255,255,255,.2)}.nst b.on{color:#ffd23f}
+.tabs button{max-width:90px}
+@media(prefers-reduced-motion:reduce){.orb,.play,.confetti i{animation:none!important}}
 """
 
 NAV = '<header class="bar"><a class="logo" href="./"><i></i>Brainloop</a><nav class="top"><a href="guide.html">Guide</a><a href="about.html">About</a></nav></header>'
@@ -343,7 +422,7 @@ index = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta nam
 <body class="has-tabs">{NAV}<div id="app"></div>
 <main><article style="padding-top:0"><h2>What is Brainloop?</h2>
 <p>Brainloop is a free daily puzzle game made of five short puzzles: number sequences, logic questions, odd one out, mental math and a 4 by 4 mini sudoku. The set is new every day and the same for every player, so you can compare results with friends. Build a streak, practice any type you like, and read the <a href="guide.html">guide</a> to learn the tricks.</p>
-<p>It is built to be quick and calm, with no timers, no accounts and no tracking. Your progress stays on your device, and it works offline once opened. It is a game for fun and practice, not an IQ test.</p></article></main>
+<p>It is built to be quick and fun, with levels, combos, sound effects you can switch off, no accounts and no tracking. Your progress stays on your device, and it works offline once opened. It is a game for fun and practice, not an IQ test.</p></article></main>
 {FOOT}<script src="gen.js?v={VERSION}"></script><script src="app.js?v={VERSION}"></script></body></html>'''
 open(os.path.join(OUT, 'index.html'), 'w').write(index)
 open(os.path.join(OUT, 'style.css'), 'w').write(CSS)
