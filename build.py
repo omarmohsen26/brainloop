@@ -1,7 +1,7 @@
 import os, json
 from PIL import Image, ImageDraw
 OUT = os.path.dirname(os.path.abspath(__file__))
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 CSS = """
 :root{--bg:#f6f4ee;--ink:#1d1b2e;--mut:#5d5a70;--card:#fff;--line:#e4e0d4;--acc:#4f46e5;--acc2:#eef0ff;--ok:#16a34a;--bad:#dc2626;--half:#d9a400}
@@ -35,7 +35,7 @@ h3{font-size:17px;margin:1.2em 0 .3em}
 .dots{display:flex;gap:6px;margin:4px 0 10px}.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
 .dots i.ok{background:var(--ok)}.dots i.half{background:var(--half)}.dots i.bad{background:var(--bad)}.dots i.cur{background:var(--acc)}
 .show{font-size:24px;font-weight:700;text-align:center;background:var(--acc2);border-radius:14px;padding:18px 12px;margin:6px 0 14px;letter-spacing:.02em;line-height:1.4}
-.show.order{font-size:17px;font-weight:600;text-align:left;letter-spacing:0}
+.show.shapes{font-size:22px;white-space:pre-line;line-height:1.7;letter-spacing:.04em}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}.g3 i{font-style:normal;font-size:26px;font-weight:700;text-align:center;background:var(--acc2);border-radius:12px;padding:14px 0}.g3 i.q{background:var(--acc);color:#fff}.tg{display:block;margin-top:12px;font-size:14px;color:var(--mut)}.tg input{width:20px;height:20px;vertical-align:middle;margin-right:6px}.next{margin-top:12px}.hero .btn+.btn{margin-left:8px}.show.order{font-size:17px;font-weight:600;text-align:left;letter-spacing:0}
 .opts{display:grid;gap:10px}.opts.c2{grid-template-columns:1fr 1fr}.opts.c5{grid-template-columns:repeat(3,1fr)}
 .opt{font:inherit;font-size:20px;font-weight:700;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;min-height:58px;cursor:pointer}
 .opt.right{border-color:var(--ok);background:rgba(22,163,74,.14)}.opt.wrong{border-color:var(--bad);background:rgba(220,38,38,.12)}

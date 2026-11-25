@@ -1,4 +1,4 @@
-const V = 'brainloop-1.0.0';
+const V = 'brainloop-1.1.0';
 const FILES = ["./", "index.html", "style.css", "gen.js", "app.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "about.html", "brain-training-faq.html", "guide.html", "logic-puzzles.html", "mental-math.html", "mini-sudoku.html", "privacy.html", "sequences.html"];
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(V).then(c => c.addAll(FILES))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

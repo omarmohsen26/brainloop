@@ -20,7 +20,7 @@
 
   function home() {
     setBusy(false);
-    const t = today(), n = dayNum(t), day = S.days[t];
+    const t = today(), n = dayNum(t), day = S.days[t], hday = S.days[t + 'h'];
     const done = day && day.done;
     const streakAlive = S.last === t || S.last === yest(t);
     const streak = streakAlive ? S.streak : 0;
@@ -30,6 +30,8 @@
       <h1>${done ? 'Nice work. See you tomorrow.' : 'Five quick puzzles. About five minutes.'}</h1>
       <p class="sub">Number patterns, logic, odd one out, mental math and a mini sudoku. A new set every day, the same for everyone.</p>
       <button class="btn primary" id="go">${done ? 'Review today\'s result' : (day && day.i > 0 ? 'Continue today\'s set' : 'Start today\'s set')}</button>
+      <button class="btn" id="hard">${hday && hday.done ? 'Hard set: ' + hday.score + '/5' : 'Hard set'}</button>
+      ${done ? '<p class="sub next">Next set in <b id="cd"></b></p>' : ''}
     </section>`));
     app.appendChild(el(`<section class="stats">
       <div class="stat"><b>${streak}</b><span>Day streak</span></div>
@@ -39,13 +41,16 @@
     </section>`));
     app.appendChild(el(`<section class="card"><h2>Practice</h2><p class="sub">Endless extra puzzles. Pick a type.</p>
       <div class="chips">
-        <button class="chip" data-k="seq">Sequences</button><button class="chip" data-k="order">Logic</button>
-        <button class="chip" data-k="odd">Odd one out</button><button class="chip" data-k="math">Mental math</button>
-        <button class="chip" data-k="sudoku">Mini sudoku</button><button class="chip" data-k="">Mixed</button>
-      </div></section>`));
+        <button class="chip" data-k="seq">Sequences</button><button class="chip" data-k="letters">Letters</button><button class="chip" data-k="order">Logic</button>
+        <button class="chip" data-k="odd">Odd one out</button><button class="chip" data-k="grid">Number grid</button><button class="chip" data-k="shapes">Shape math</button>
+        <button class="chip" data-k="math">Mental math</button><button class="chip" data-k="sudoku">Mini sudoku</button><button class="chip" data-k="">Mixed</button>
+      </div><label class="tg"><input type="checkbox" id="hp"${S.hp ? ' checked' : ''}> Hard mode</label></section>`));
     app.appendChild(el(`<section class="card"><h2>Learn the tricks</h2><p class="sub">Short guides to each puzzle type, with worked examples.</p>
       <p class="links"><a href="sequences.html">Number sequences</a><a href="logic-puzzles.html">Logic puzzles</a><a href="mini-sudoku.html">Mini sudoku</a><a href="mental-math.html">Mental math</a><a href="brain-training-faq.html">Does brain training work?</a></p></section>`));
-    $('#go').onclick = () => daily();
+    $('#go').onclick = () => daily(false);
+    $('#hard').onclick = () => daily(true);
+    countdown();
+    $('#hp').onchange = e => { S.hp = e.target.checked; save(S); };
     app.querySelectorAll('.chip').forEach(b => b.onclick = () => practice(b.dataset.k, 0));
     window.scrollTo(0, 0);
   }
@@ -57,35 +62,37 @@
     }).join('') + '</div>';
   }
 
-  function daily() {
-    const t = today(); const set = BL.dailySet(t);
-    const day = S.days[t] = S.days[t] || { i: 0, res: [], done: false };
-    if (day.done) return summary(t);
-    showPuzzle(set[day.i], dots(day.res, day.i), `Puzzle ${day.i + 1} of 5`, score => {
+  function daily(hard) {
+    const t = today(), key = hard ? t + 'h' : t; const set = BL.dailySet(t, hard);
+    const day = S.days[key] = S.days[key] || { i: 0, res: [], done: false };
+    if (day.done) return summary(t, hard);
+    showPuzzle(set[day.i], dots(day.res, day.i), (hard ? 'Hard · ' : '') + `Puzzle ${day.i + 1} of 5`, score => {
       day.res[day.i] = score; day.i++;
-      if (day.i >= 5) finishDay(t, day);
-      save(S); if (day.done) summary(t); else daily();
+      if (day.i >= 5) finishDay(t, day, hard);
+      save(S); if (day.done) summary(t, hard); else daily(hard);
     }, false);
   }
 
-  function finishDay(t, day) {
+  function finishDay(t, day, hard) {
     day.done = true;
     const pts = day.res.reduce((a, r) => a + (r === 2 ? 1 : r === 1 ? 0.5 : 0), 0);
     day.score = pts;
+    if (hard) { S.hardPlayed = (S.hardPlayed || 0) + 1; S.hardTotal = (S.hardTotal || 0) + pts; return; }
     S.played++; S.totalScore += pts;
     if (S.last === yest(t)) S.streak++; else if (S.last !== t) S.streak = 1;
     S.last = t; S.best = Math.max(S.best, S.streak);
   }
 
-  function summary(t) {
+  function summary(t, hard) {
     setBusy(false);
-    const day = S.days[t]; const n = dayNum(t);
+    const day = S.days[hard ? t + 'h' : t]; const n = dayNum(t);
     const em = day.res.map(r => r === 2 ? '🟩' : r === 1 ? '🟨' : '⬛').join('');
-    const txt = `${SITE} #${n}  ${day.score}/5\n${em}\n🔥 ${S.streak} day streak\n${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
+    const txt = `${SITE}${hard ? ' Hard' : ''} #${n}  ${day.score}/5\n${em}\n${hard ? '' : '🔥 ' + S.streak + ' day streak\n'}${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
     app.innerHTML = '';
-    app.appendChild(el(`<section class="hero"><p class="eyebrow">Daily set #${n}</p><h1>${day.score} out of 5</h1>
-      <p class="sq">${day.res.map(r => `<i class="${r === 2 ? 'ok' : r === 1 ? 'half' : 'bad'}"></i>`).join('')}</p><p class="sub">Green: first try. Yellow: sudoku with a wrong check. Red: missed. Streak: <b>${S.streak}</b> day${S.streak === 1 ? '' : 's'}.</p>
-      <button class="btn primary" id="share">Share result</button> <button class="btn" id="back">Home</button></section>`));
+    app.appendChild(el(`<section class="hero"><p class="eyebrow">${hard ? 'Hard set' : 'Daily set'} #${n}</p><h1>${day.score} out of 5</h1>
+      <p class="sq">${day.res.map(r => `<i class="${r === 2 ? 'ok' : r === 1 ? 'half' : 'bad'}"></i>`).join('')}</p><p class="sub">Green: first try. Yellow: sudoku with a wrong check. Red: missed.${hard ? '' : ` Streak: <b>${S.streak}</b> day${S.streak === 1 ? '' : 's'}.`}</p>
+      <button class="btn primary" id="share">Share result</button> <button class="btn" id="back">Home</button><p class="sub next">Next set in <b id="cd"></b></p></section>`));
+    countdown();
     $('#back').onclick = home;
     $('#share').onclick = async () => {
       try { if (navigator.share) { await navigator.share({ text: txt }); return; } } catch (e) { return; }
@@ -94,11 +101,17 @@
     window.scrollTo(0, 0);
   }
 
+  let cdT;
+  function countdown() {
+    clearInterval(cdT); const e = $('#cd'); if (!e) return;
+    const tick = () => { const n = new Date(), m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1); const s = Math.max(0, Math.floor((m - n) / 1000)); const p = x => String(x).padStart(2, '0'); const el2 = $('#cd'); if (!el2) { clearInterval(cdT); return; } el2.textContent = p(Math.floor(s / 3600)) + ':' + p(Math.floor(s % 3600 / 60)) + ':' + p(s % 60); };
+    tick(); cdT = setInterval(tick, 1000);
+  }
   function toast(m) { const t = el(`<div class="toast">${esc(m)}</div>`); document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
 
   function practice(kind, n) {
     const seed = 'practice|' + Date.now() + '|' + n + '|' + Math.random();
-    const p = BL.practice(seed, kind);
+    const p = BL.practice(seed, kind, !!S.hp);
     showPuzzle(p, '', 'Practice · puzzle ' + (n + 1), () => practice(kind, n + 1), true, home);
   }
 
@@ -116,6 +129,7 @@
     }
     if (p.type !== 'sudoku') {
       setBusy(false);
+      if (p.cells) body.appendChild(el('<div class="g3">' + p.cells.map(c => '<i' + (c === '?' ? ' class="q"' : '') + '>' + esc(c) + '</i>').join('') + '</div>'));
       if (p.show) body.appendChild(el(`<div class="show ${p.type}">${esc(p.show)}</div>`));
       const opts = el(`<div class="opts c${p.cols || 2}"></div>`);
       p.options.forEach(o => {
