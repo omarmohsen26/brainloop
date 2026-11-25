@@ -158,11 +158,32 @@
     return { type: 'grid', title: 'Number grid', prompt: 'Find the rule in the rows. What goes in the empty cell?', cells, options: numOptions(r, ans), answer: String(ans), explain: why };
   }
 
-  const makers = { seq: sequence, letters: letters, order: ordering, odd: oddOne, grid: grid, math: mental, shapes: shapes, sudoku: sudoku };
+  function operators(r, h) {
+    const OPS = ['+', '−', '×'], n = h ? 3 : 2;
+    const ev = (nums, ops) => { // × first, then left to right
+      const ns = nums.slice(), os = ops.slice();
+      for (let i = 0; i < os.length;) { if (os[i] === '×') { ns.splice(i, 2, ns[i] * ns[i + 1]); os.splice(i, 1); } else i++; }
+      let v = ns[0]; for (let i = 0; i < os.length; i++) v = os[i] === '+' ? v + ns[i + 1] : v - ns[i + 1]; return v;
+    };
+    const combos = []; (function rec(a) { if (a.length === n) { combos.push(a.slice()); return; } for (const o of OPS) { a.push(o); rec(a); a.pop(); } })([]);
+    for (let tries = 0; tries < 200; tries++) {
+      const nums = Array.from({ length: n + 1 }, () => ri(r, 2, 9)); const ops = Array.from({ length: n }, () => pick(r, OPS));
+      const res = ev(nums, ops); const same = combos.filter(c => ev(nums, c) === res);
+      if (same.length !== 1 || res < 0) continue;
+      const wrong = shuffle(r, combos.filter(c => c.join('') !== ops.join(''))).slice(0, 3);
+      const fmt = c => c.join('  ');
+      let line = String(nums[0]); for (let i = 0; i < n; i++) line += ' ? ' + nums[i + 1]; line += ' = ' + res;
+      let ex = String(nums[0]); for (let i = 0; i < n; i++) ex += ' ' + ops[i] + ' ' + nums[i + 1]; ex += ' = ' + res;
+      return { type: 'ops', title: 'Missing signs', prompt: 'Which signs make it true? Multiplication goes first.', show: line, options: shuffle(r, [ops].concat(wrong)).map(fmt), answer: fmt(ops), explain: ex + '. Each of the other choices gives a different result.' };
+    }
+    return operators(r, 0);
+  }
+
+  const makers = { seq: sequence, letters: letters, order: ordering, odd: oddOne, grid: grid, math: mental, shapes: shapes, ops: operators, sudoku: sudoku };
   function dailySet(dateStr, h) {
     const r = rng(hash('brainloop|' + dateStr + (h ? '|hard' : '')));
     const A = r() < 0.5, B = r() < 0.5, C = r() < 0.5;
-    return [A ? sequence(r, h) : letters(r, h), ordering(r, h), B ? oddOne(r, h) : grid(r, h), C ? mental(r, h) : shapes(r, h), sudoku(r, h)];
+    return [A ? sequence(r, h) : letters(r, h), ordering(r, h), B ? oddOne(r, h) : grid(r, h), (C ? (r() < 0.5 ? mental(r, h) : operators(r, h)) : shapes(r, h)), sudoku(r, h)];
   }
   function practice(seedStr, kind, h) { const r = rng(hash(seedStr)); const ks = Object.keys(makers); return makers[kind && makers[kind] ? kind : pick(r, ks)](r, h); }
   root.BL = { dailySet, practice, hash, rng };

@@ -1,7 +1,7 @@
 import os, json
 from PIL import Image, ImageDraw
 OUT = os.path.dirname(os.path.abspath(__file__))
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 
 CSS = """
 :root{--bg:#f6f4ee;--ink:#1d1b2e;--mut:#5d5a70;--card:#fff;--line:#e4e0d4;--acc:#4f46e5;--acc2:#eef0ff;--ok:#16a34a;--bad:#dc2626;--half:#d9a400}
@@ -76,7 +76,7 @@ body.has-tabs{padding-bottom:84px}
 .cal i.e{display:block}.cal button{font:inherit;font-size:13px;font-weight:600;aspect-ratio:1;border-radius:11px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;min-height:36px}
 .cal button.ok{background:var(--ok);border-color:var(--ok);color:#fff}.cal button.half{background:var(--half);border-color:var(--half);color:#fff}.cal button.bad{background:var(--bad);border-color:var(--bad);color:#fff}.cal button.now{outline:2.5px solid var(--acc);outline-offset:1px}
 .list a{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);padding:12px 0;border-bottom:1px solid var(--line)}.list a b{font-size:16px}.list a span{font-size:13px;color:var(--mut)}.list a:last-child{border:0}
-.tip{display:flex;gap:10px;align-items:flex-start;background:var(--acc2)}.tip .sub{margin:.2em 0 0;font-size:14px}.puzzle{animation:rise .2s ease-out}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.badge{font-size:13px;font-weight:600;padding:8px 12px;border-radius:999px;border:1.5px dashed var(--line);color:var(--mut)}.badge.on{border:1.5px solid var(--acc);background:var(--acc2);color:var(--ink)}.tip{display:flex;gap:10px;align-items:flex-start;background:var(--acc2)}.tip .sub{margin:.2em 0 0;font-size:14px}.puzzle{animation:rise .2s ease-out}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 footer{max-width:560px;margin:10px auto 30px;padding:0 18px;color:var(--mut);font-size:13px}footer a{color:var(--mut);margin-right:12px}
 article{padding-top:6px}article p,article li{color:var(--ink)}article .ex{background:var(--acc2);border-radius:12px;padding:12px 14px;margin:10px 0}
 a{color:var(--acc)}

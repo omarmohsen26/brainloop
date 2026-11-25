@@ -15,7 +15,7 @@
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
   function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { } }
   const S = load();
-  S.days = S.days || {}; S.streak = S.streak || 0; S.best = S.best || 0; S.last = S.last || ''; S.played = S.played || 0; S.totalScore = S.totalScore || 0; S.freeze = S.freeze || 0;
+  S.days = S.days || {}; S.streak = S.streak || 0; S.best = S.best || 0; S.last = S.last || ''; S.played = S.played || 0; S.totalScore = S.totalScore || 0; S.freeze = S.freeze || 0; S.byType = S.byType || {}; S.badges = S.badges || [];
 
   function setBusy(b) { busy = b; if (!b && pendingReload) location.reload(); }
   const app = $('#app');
@@ -76,7 +76,7 @@
       <div class="chips">
         <button class="chip" data-k="seq">Sequences</button><button class="chip" data-k="letters">Letters</button><button class="chip" data-k="order">Logic</button>
         <button class="chip" data-k="odd">Odd one out</button><button class="chip" data-k="grid">Number grid</button><button class="chip" data-k="shapes">Shape math</button>
-        <button class="chip" data-k="math">Mental math</button><button class="chip" data-k="sudoku">Mini sudoku</button><button class="chip" data-k="">Mixed</button>
+        <button class="chip" data-k="math">Mental math</button><button class="chip" data-k="ops">Missing signs</button><button class="chip" data-k="sudoku">Mini sudoku</button><button class="chip" data-k="">Mixed</button>
       </div><label class="tg"><input type="checkbox" id="hp"${S.hp ? ' checked' : ''}> Hard mode</label></section>`));
     $('#hp').onchange = e => { S.hp = e.target.checked; save(S); };
     app.querySelectorAll('.chip').forEach(b => b.onclick = () => practice(b.dataset.k, 0));
@@ -92,6 +92,10 @@
       <div class="stat"><b>${streakNow()}</b><span>Streak</span></div><div class="stat"><b>${S.best}</b><span>Best</span></div>
       <div class="stat"><b>${S.played}</b><span>Sets</span></div><div class="stat"><b>${S.played ? (S.totalScore / S.played).toFixed(1) : '0'}</b><span>Avg /5</span></div></div>
       <p class="sub">Streak freeze: <b>${S.freeze}</b>. Every 7-day streak earns one (max 1). It covers one missed day so a busy day does not wipe your streak.</p></section>`));
+    const NAMES = { seq: 'Number sequences', letters: 'Letter sequences', order: 'Logic', odd: 'Odd one out', grid: 'Number grids', shapes: 'Shape math', math: 'Mental math', ops: 'Missing signs', sudoku: 'Mini sudoku' };
+    const rows = Object.keys(NAMES).filter(k => S.byType[k] && S.byType[k].n).map(k => ({ k, n: S.byType[k].n, pct: Math.round(S.byType[k].ok / S.byType[k].n * 100) })).sort((x, y) => y.pct - x.pct);
+    if (rows.length) app.appendChild(el(`<section class="card"><h2>By puzzle type</h2><p class="sub">First-try accuracy. ${rows.length > 1 ? 'Strongest: <b>' + NAMES[rows[0].k] + '</b>. To practice: <b>' + NAMES[rows[rows.length - 1].k] + '</b>.' : ''}</p><div class="dist">${rows.map(r => `<div><u style="width:${Math.max(4, r.pct)}%"></u><em>${r.pct}% · ${NAMES[r.k]} (${r.n})</em></div>`).join('')}</div></section>`));
+    app.appendChild(el(`<section class="card"><h2>Badges</h2><div class="chips">${BADGES.map(b => `<span class="badge${S.badges.indexOf(b[0]) >= 0 ? ' on' : ''}">${b[1]}</span>`).join('')}</div></section>`));
     app.appendChild(el(`<section class="card"><h2>Scores</h2><div class="dist">${dist.map((c, i) => `<div><span>${i}</span><u style="width:${Math.max(4, c / mx * 100)}%"></u><em>${c}</em></div>`).join('')}</div></section>`));
     const cal = []; const first = addDays(t, -27);
     const off = (parse(first).getDay() + 6) % 7; for (let i = 0; i < off; i++) cal.push('<i class="e"></i>');
@@ -119,7 +123,7 @@
     showPuzzle(set[day.i], dots(day.res, day.i), (isArchive ? 'Archive · ' : '') + (hard ? 'Hard · ' : '') + `Puzzle ${day.i + 1} of 5`, score => {
       day.res[day.i] = score; day.i++;
       if (day.i >= 5) finishDay(date, day, hard, isArchive);
-      save(S); if (day.done) summary(date, hard); else daily(hard, date);
+      save(S); if (day.done) { awardBadges(); summary(date, hard); } else daily(hard, date);
     }, false);
   }
   function finishDay(t, day, hard, isArchive) {
@@ -135,6 +139,9 @@
     S.last = t; S.best = Math.max(S.best, S.streak);
     if (S.streak > 0 && S.streak % 7 === 0) S.freeze = Math.min(1, S.freeze + 1);
   }
+  const BADGES = [['first', 'First set', () => S.played >= 1], ['s3', '3-day streak', () => S.best >= 3], ['s7', '7-day streak', () => S.best >= 7], ['s14', '14-day streak', () => S.best >= 14], ['s30', '30-day streak', () => S.best >= 30],
+    ['p10', '10 sets', () => S.played >= 10], ['p50', '50 sets', () => S.played >= 50], ['perf', 'Perfect set', () => Object.keys(S.days).some(k => !k.endsWith('h') && S.days[k].score === 5)], ['hard', 'Hard set 5/5', () => Object.keys(S.days).some(k => k.endsWith('h') && S.days[k].score === 5)], ['hard3', '3 hard sets', () => (S.hardPlayed || 0) >= 3]];
+  function awardBadges() { const fresh = BADGES.filter(b => b[2]() && S.badges.indexOf(b[0]) < 0); fresh.forEach(b => S.badges.push(b[0])); save(S); if (fresh.length) setTimeout(() => toast('Badge earned: ' + fresh[0][1]), 500); }
 
   function summary(t, hard) {
     setBusy(false); playing(false);
@@ -205,6 +212,7 @@
     const body = $('#body'), fb = $('#fb');
     function next(score, ok, extra) {
       buzz(ok ? 15 : [30, 40, 30]);
+      { const bt = S.byType[p.type] = S.byType[p.type] || { n: 0, ok: 0 }; bt.n++; if (score === 2) bt.ok++; save(S); }
       fb.innerHTML = `<div class="fb ${ok ? 'good' : 'bad'}"><b>${ok ? 'Correct' : 'Not quite'}.</b> ${esc(extra || p.explain)}</div><button class="btn primary" id="nx">${isPractice ? 'Next puzzle' : 'Continue'}</button>`;
       $('#nx').onclick = () => onDone(score);
       $('#nx').focus();
