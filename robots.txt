@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://omarmohsen26.github.io/brainloop/sitemap.xml

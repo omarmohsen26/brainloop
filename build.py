@@ -1,7 +1,7 @@
 import os, json
 from PIL import Image, ImageDraw
 OUT = os.path.dirname(os.path.abspath(__file__))
-VERSION = "1.1.0"
+VERSION = "1.3.0"
 
 CSS = """
 :root{--bg:#f6f4ee;--ink:#1d1b2e;--mut:#5d5a70;--card:#fff;--line:#e4e0d4;--acc:#4f46e5;--acc2:#eef0ff;--ok:#16a34a;--bad:#dc2626;--half:#d9a400}
@@ -49,6 +49,34 @@ h3{font-size:17px;margin:1.2em 0 .3em}
 .msg{min-height:24px;color:var(--mut);font-size:14px;text-align:center;margin-bottom:6px}
 .sq{display:flex;gap:8px;margin:10px 0}.sq i{width:42px;height:42px;border-radius:10px;background:var(--line)}.sq i.ok{background:var(--ok)}.sq i.half{background:var(--half)}.sq i.bad{background:var(--bad)}.emoji{font-size:30px;letter-spacing:4px;margin:6px 0}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;z-index:9}
+
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:center;gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.tabs button{flex:1;max-width:120px;font:inherit;font-size:11px;font-weight:600;color:var(--mut);background:none;border:0;border-radius:14px;padding:6px 0 4px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;cursor:pointer}
+.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{color:var(--acc);background:var(--acc2)}
+body.has-tabs{padding-bottom:84px}
+.playing article,.playing footer{display:none}
+.hero2{background:linear-gradient(145deg,#5b52f0,#2f2890);color:#fff;border-radius:24px;padding:22px 20px 20px;margin:6px 0 14px;box-shadow:0 10px 30px rgba(79,70,229,.28)}
+.hero2 h1{margin:.35em 0 .3em;font-size:27px}.hero2.tall{padding-bottom:24px}
+.hero2 .big{font-size:84px;line-height:1;margin:.1em 0}.hero2 .big small{font-size:34px;opacity:.7}
+.eyebrow.w{color:rgba(255,255,255,.78)}.sub.w{color:rgba(255,255,255,.85)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{background:rgba(255,255,255,.18);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700}
+.btn.light{background:#fff;color:#2f2890;border-color:#fff}.btn.ghost{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.3)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.hero2 .sq i{background:rgba(255,255,255,.2)}.hero2 .sq i.ok{background:#22c55e}.hero2 .sq i.half{background:#facc15}.hero2 .sq i.bad{background:#ef4444}
+.row2{display:flex;justify-content:space-between;align-items:center;gap:12px}.row2 .sub{margin:0}
+.h1s{font-size:24px;margin:.1em 0 .2em}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}.week i{aspect-ratio:1;border-radius:12px;background:var(--line);display:flex;align-items:center;justify-content:center;font-style:normal}
+.week i b{font-size:12px;color:var(--mut)}.week i.ok{background:var(--ok)}.week i.half{background:var(--half)}.week i.bad{background:var(--bad)}
+.week i.ok b,.week i.half b,.week i.bad b{color:#fff}.week i.now{outline:2.5px solid var(--acc);outline-offset:2px}
+.dist div{display:flex;align-items:center;gap:8px;margin:5px 0}.dist span{width:14px;font-size:13px;color:var(--mut)}.dist u{display:block;height:20px;border-radius:6px;background:var(--acc)}.dist em{font-style:normal;font-size:13px;font-weight:700}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal span{text-align:center;font-size:11px;color:var(--mut)}
+.cal i.e{display:block}.cal button{font:inherit;font-size:13px;font-weight:600;aspect-ratio:1;border-radius:11px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;min-height:36px}
+.cal button.ok{background:var(--ok);border-color:var(--ok);color:#fff}.cal button.half{background:var(--half);border-color:var(--half);color:#fff}.cal button.bad{background:var(--bad);border-color:var(--bad);color:#fff}.cal button.now{outline:2.5px solid var(--acc);outline-offset:1px}
+.list a{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);padding:12px 0;border-bottom:1px solid var(--line)}.list a b{font-size:16px}.list a span{font-size:13px;color:var(--mut)}.list a:last-child{border:0}
+.tip{display:flex;gap:10px;align-items:flex-start;background:var(--acc2)}.tip .sub{margin:.2em 0 0;font-size:14px}.puzzle{animation:rise .2s ease-out}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 footer{max-width:560px;margin:10px auto 30px;padding:0 18px;color:var(--mut);font-size:13px}footer a{color:var(--mut);margin-right:12px}
 article{padding-top:6px}article p,article li{color:var(--ink)}article .ex{background:var(--acc2);border-radius:12px;padding:12px 14px;margin:10px 0}
 a{color:var(--acc)}
@@ -62,7 +90,8 @@ FOOT = '<footer><a href="about.html">About</a><a href="guide.html">How to play</
 def page(slug, title, desc, body):
     html = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{title}</title><meta name="description" content="{desc}"><meta name="theme-color" content="#4f46e5">
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><link rel="stylesheet" href="style.css"></head>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="bl-version" content="{VERSION}"><link rel="stylesheet" href="style.css?v={VERSION}">
+<meta property="og:site_name" content="Brainloop"><meta property="og:title" content="{title}"><meta property="og:description" content="{desc}"><meta property="og:type" content="website"><meta property="og:image" content="https://omarmohsen26.github.io/brainloop/og.png"><meta name="twitter:card" content="summary_large_image"></head>
 <body>{NAV}<main><article>{body}</article></main>{FOOT}</body></html>'''
     open(os.path.join(OUT, slug), 'w').write(html)
 
@@ -195,6 +224,83 @@ pages['privacy.html'] = ('Brainloop privacy policy', 'Brainloop collects no pers
 <p>If we ever add advertising or any other service that handles data, this page will be updated first to explain exactly what changes, and the game will ask where the law requires it.</p>
 <p>Last updated: November 25, 2026.</p>''')
 
+
+pages['letter-sequences.html'] = ('Letter sequence puzzles: how to solve them', 'How to solve letter sequence puzzles by counting places in the alphabet, with worked examples.', """
+<p class="eyebrow">Guide</p><h1>Letter sequences: count the places</h1>
+<p>A letter sequence looks like A, C, E, G, ? and asks for the next letter. The trick is to turn letters into numbers. A is 1, B is 2, C is 3, and so on up to Z, which is 26. Once you see numbers, it becomes a number sequence.</p>
+<h2>Step 1: count the jumps</h2>
+<p>For A, C, E, G the numbers are 1, 3, 5, 7. The jump is +2 each time, so the next number is 9, which is the letter I.</p>
+<h2>Step 2: if the jumps change, write them down</h2>
+<p>For B, C, E, H, L the numbers are 2, 3, 5, 8, 12. The jumps are 1, 2, 3, 4, so the next jump is 5 and the next number is 17, which is Q.</p>
+<h2>Step 3: watch for alternating jumps</h2>
+<p>For C, D, I, J, O the numbers are 3, 4, 9, 10, 15. The jumps go +1, +5, +1, +5, so the next jump is +1 and the next letter is P (16).</p>
+<div class="ex"><b>Alphabet anchors that save time:</b> E is 5, J is 10, O is 15, T is 20, Y is 25. Count from the nearest anchor instead of from A.</div>
+<h2>Common mistakes</h2>
+<ul><li>Counting the letter itself. Counting from C to E is 2 places, not 3.</li><li>Forgetting that Brainloop sequences never wrap past Z.</li><li>Looking only at the first two letters. Check the rule on every pair.</li></ul>
+<p>Compare with <a href="sequences.html">number sequences</a>, which use the same ideas. <a href="./">Try today's set</a></p>""")
+
+pages['odd-one-out.html'] = ('Odd one out puzzles: how to find the number that does not belong', 'A guide to odd one out number puzzles: multiples, primes, squares, digit sums and more.', """
+<p class="eyebrow">Guide</p><h1>Odd one out: find the rule that breaks</h1>
+<p>In an odd one out puzzle, four of the five numbers share a property and one does not. You do not need to name the property in advance. Test a short list of ideas until four numbers agree.</p>
+<h2>Idea 1: multiples</h2>
+<p>Do four numbers divide evenly by the same small number? In 18, 27, 45, 63, 40 the first four are multiples of 9. 40 is not. Try 2, 3, 4, 5, 6, 7, 9 in that order.</p>
+<h2>Idea 2: primes</h2>
+<p>A prime has no divisors except 1 and itself. In 11, 17, 23, 29, 51 the first four are prime. 51 is 3 times 17, so it does not belong.</p>
+<h2>Idea 3: squares and powers of 2</h2>
+<p>Learn the squares up to 12 (1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144) and the powers of 2 (2, 4, 8, 16, 32, 64, 128, 256). Both lists appear a lot.</p>
+<h2>Idea 4: digit sums</h2>
+<p>Add the digits of each number. In 18, 27, 36, 45, 53 the digits of the first four add up to 9. 53 adds up to 8.</p>
+<h2>Idea 5: even, odd and palindromes</h2>
+<p>Check whether four are even and one is odd. In hard mode, also check for palindromes, numbers that read the same backwards, such as 121 or 44.</p>
+<div class="ex"><b>Fast habit:</b> check even or odd first, then multiples, then squares or primes, then digit sums. That order solves almost every puzzle.</div>
+<p><a href="./">Try today's set</a></p>""")
+
+pages['number-grids.html'] = ('Number grid puzzles: how to find the rule', 'How to solve 3 by 3 number grid puzzles where each row follows the same rule.', """
+<p class="eyebrow">Guide</p><h1>Number grids: read the rule across rows</h1>
+<p>A number grid is three rows of three numbers. Every row follows the same rule to get its last number from the first two. The last cell of the third row is empty. Find the rule from the complete rows, then apply it.</p>
+<h2>Test the four common rules</h2>
+<ul><li><b>Add:</b> first + second = third. Row 4, 7, 11 fits.</li><li><b>Subtract:</b> first − second = third. Row 20, 6, 14 fits.</li><li><b>Multiply:</b> first × second = third. Row 3, 5, 15 fits.</li><li><b>Double plus:</b> twice the first + the second = third. Row 4, 3, 11 fits.</li></ul>
+<h2>Method</h2>
+<ol><li>Look at the first row only. Try each rule until one works.</li><li>Check that rule on the second row. If it fails, try another one.</li><li>Apply the rule to the first two numbers of the third row.</li></ol>
+<div class="ex"><b>Example.</b> Rows: 9, 6, 15 and 6, 12, 18 and 10, 2, ?. Row one: 9 + 6 = 15. Row two: 6 + 12 = 18. The rule is add. So 10 + 2 = 12.</div>
+<h2>Tip</h2>
+<p>If two rules both fit one row (for example 2, 2, 4 fits both add and multiply), use the second row to decide.</p>
+<p><a href="./">Try today's set</a></p>""")
+
+pages['shape-equations.html'] = ('Shape math puzzles: solving for each symbol', 'A guide to shape equation puzzles where each symbol is a hidden number.', """
+<p class="eyebrow">Guide</p><h1>Shape math: solve for each symbol</h1>
+<p>In a shape math puzzle each symbol stands for a number. The same symbol is always the same number. You are given a few equations and asked to work out the last line.</p>
+<h2>Start with the line that has only one kind of shape</h2>
+<p>If a line reads ● + ● + ● = 18, then three of the same shape make 18, so ● is 6. That is your first solid fact.</p>
+<h2>Substitute and move on</h2>
+<p>If the next line reads ● + ■ = 10, put 6 in for ●: 6 + ■ = 10, so ■ is 4. Keep going until every shape is known.</p>
+<h2>Hard mode: multiplication</h2>
+<p>A line like ● × ● = 25 means ● times itself is 25, so ● is 5. Then ● × ■ = 25 gives ■ = 5. Learn the squares (4, 9, 16, 25, 36, 49) to spot these fast.</p>
+<div class="ex"><b>Example.</b> ● + ● + ● = 15, ● + ■ = 9, ■ + ▲ = 11, ▲ + ● = ?<br>● = 5. ■ = 4. ▲ = 7. So ▲ + ● = 12.</div>
+<h2>Check your work</h2>
+<p>Put your values back into every line. If one line fails, one of your steps is wrong. Fix it before you answer.</p>
+<p><a href="./">Try today's set</a></p>""")
+
+pages['daily-puzzle-habit.html'] = ('How to build a daily puzzle habit', 'Practical tips for making five minutes of puzzles a steady daily habit without pressure.', """
+<p class="eyebrow">Guide</p><h1>How to build a daily puzzle habit</h1>
+<p>A good puzzle habit is small. Five minutes a day is easier to keep than an hour once a week, and that is why Brainloop gives you one short set each day.</p>
+<h2>Attach it to something you already do</h2>
+<p>Pair the puzzle with a cue: your morning coffee, your commute, or the minute before bed. A cue you already have is easier to remember than a reminder.</p>
+<h2>Keep the bar low</h2>
+<p>On a busy day, finish the set even if you rush. A fast attempt keeps the routine alive. A streak freeze covers one missed day, so a single bad day does not undo your progress.</p>
+<h2>Learn from misses</h2>
+<p>After a wrong answer, read the short explanation. Most puzzles repeat a small set of ideas, so a ten-second read makes you faster next time. The <a href="learn.html">guides</a> list them type by type.</p>
+<h2>Use hard mode when it feels easy</h2>
+<p>When you score five out of five for a week, try the hard set. It uses the same ideas with extra steps.</p>
+<h2>Compare, do not compete</h2>
+<p>Share your result card with a friend and see how you did on the same set. The colored squares do not give away the answers.</p>
+<p><a href="./">Play today's set</a></p>""")
+
+pages['learn.html'] = ('Learn: puzzle guides', 'All Brainloop puzzle guides in one place.', """
+<p class="eyebrow">Learn</p><h1>Puzzle guides</h1>
+<p>Short guides with worked examples for every puzzle type in Brainloop.</p>
+<ul><li><a href="sequences.html">Number sequences</a></li><li><a href="letter-sequences.html">Letter sequences</a></li><li><a href="logic-puzzles.html">Logic ordering</a></li><li><a href="odd-one-out.html">Odd one out</a></li><li><a href="number-grids.html">Number grids</a></li><li><a href="shape-equations.html">Shape math</a></li><li><a href="mini-sudoku.html">Mini sudoku</a></li><li><a href="mental-math.html">Mental math</a></li><li><a href="daily-puzzle-habit.html">Build a daily puzzle habit</a></li><li><a href="brain-training-faq.html">Does brain training work?</a></li></ul>""")
+
 for slug, (t, d, b) in pages.items():
     page(slug, t, d, b)
 
@@ -202,29 +308,51 @@ for slug, (t, d, b) in pages.items():
 index = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Brainloop: a free daily puzzle game</title>
 <meta name="description" content="Five quick brain puzzles every day: number sequences, logic, odd one out, mental math and mini sudoku. Free, private, works offline.">
-<meta name="theme-color" content="#4f46e5"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><link rel="stylesheet" href="style.css"></head>
-<body>{NAV}<div id="app"></div>
+<meta name="theme-color" content="#4f46e5"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="bl-version" content="{VERSION}"><link rel="stylesheet" href="style.css?v={VERSION}">
+<meta property="og:site_name" content="Brainloop"><meta property="og:title" content="Brainloop: a free daily puzzle game"><meta property="og:description" content="Five quick brain puzzles every day. Free, private, works offline."><meta property="og:type" content="website"><meta property="og:image" content="https://omarmohsen26.github.io/brainloop/og.png"><meta name="twitter:card" content="summary_large_image"></head>
+<body class="has-tabs">{NAV}<div id="app"></div>
 <main><article style="padding-top:0"><h2>What is Brainloop?</h2>
 <p>Brainloop is a free daily puzzle game made of five short puzzles: number sequences, logic questions, odd one out, mental math and a 4 by 4 mini sudoku. The set is new every day and the same for every player, so you can compare results with friends. Build a streak, practice any type you like, and read the <a href="guide.html">guide</a> to learn the tricks.</p>
 <p>It is built to be quick and calm, with no timers, no accounts and no tracking. Your progress stays on your device, and it works offline once opened. It is a game for fun and practice, not an IQ test.</p></article></main>
-{FOOT}<script src="gen.js"></script><script src="app.js"></script></body></html>'''
+{FOOT}<script src="gen.js?v={VERSION}"></script><script src="app.js?v={VERSION}"></script></body></html>'''
 open(os.path.join(OUT, 'index.html'), 'w').write(index)
 open(os.path.join(OUT, 'style.css'), 'w').write(CSS)
 
 manifest = {"name": "Brainloop", "short_name": "Brainloop", "description": "Five quick puzzles every day.", "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#f6f4ee", "theme_color": "#4f46e5", "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"}, {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}
 open(os.path.join(OUT, 'manifest.webmanifest'), 'w').write(json.dumps(manifest, indent=1))
 
-files = ['./', 'index.html', 'style.css', 'gen.js', 'app.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'] + sorted(pages)
-sw = f'''const V = 'brainloop-{VERSION}';
-const FILES = {json.dumps(files)};
-self.addEventListener('install', e => {{ self.skipWaiting(); e.waitUntil(caches.open(V).then(c => c.addAll(FILES))); }});
-self.addEventListener('activate', e => {{ e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); }});
-self.addEventListener('fetch', e => {{
+html_files = ['./', 'index.html'] + sorted(pages)
+asset_files = ['style.css?v=' + VERSION, 'gen.js?v=' + VERSION, 'app.js?v=' + VERSION, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'og.png']
+sw = """const V = 'brainloop-%(v)s';
+const HTML = %(html)s;
+const ASSETS = %(assets)s;
+// Install is all-or-nothing: fetch every file fresh (bypass HTTP cache), check every page carries this version,
+// and only then swap caches. A stale CDN copy during a Pages publish makes install fail, the old cache stays, the browser retries later.
+self.addEventListener('install', e => {
+  e.waitUntil((async () => { try {
+    const c = await caches.open(V);
+    for (const u of HTML) {
+      const r = await fetch(u, { cache: 'reload' });
+      if (!r.ok) throw new Error('bad ' + u);
+      const t = await r.clone().text();
+      if (t.indexOf('name="bl-version" content="%(v)s"') < 0) throw new Error('stale ' + u);
+      await c.put(u, r);
+    }
+    for (const u of ASSETS) {
+      const r = await fetch(u, { cache: 'reload' });
+      if (!r.ok) throw new Error('bad ' + u);
+      await c.put(u, r);
+    }
+    await self.skipWaiting();
+  } catch (err) { await caches.delete(V); throw err; } })());
+});
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const u = new URL(e.request.url); if (u.origin !== location.origin) return;
-  e.respondWith(fetch(e.request).then(r => {{ const copy = r.clone(); caches.open(V).then(c => c.put(e.request, copy)); return r; }}).catch(() => caches.match(e.request, {{ ignoreSearch: true }}).then(m => m || caches.match('index.html'))));
-}});
-'''
+  e.respondWith(caches.open(V).then(c => c.match(e.request, { ignoreSearch: false })).then(m => m || caches.open(V).then(c => c.match(e.request, { ignoreSearch: true })).then(m2 => m2 || fetch(e.request))));
+});
+""" % {'v': VERSION, 'html': json.dumps(html_files), 'assets': json.dumps(asset_files)}
 open(os.path.join(OUT, 'sw.js'), 'w').write(sw)
 
 def icon(n):
@@ -237,3 +365,26 @@ def icon(n):
     im.save(os.path.join(OUT, f'icon-{n}.png'))
 icon(192); icon(512)
 print('built', VERSION)
+
+# og image + sitemap + robots
+def og():
+    from PIL import ImageFont
+    W,H=1200,630; im=Image.new('RGB',(W,H),'#4f46e5'); d=ImageDraw.Draw(im)
+    for y in range(H):
+        t=y/H; d.line([(0,y),(W,y)],fill=(int(91-49*t),int(82-46*t),int(240-100*t)))
+    d.ellipse([850,-150,1350,350],fill=(100,92,240)); d.ellipse([-120,430,260,810],fill=(70,62,200))
+    def f(s):
+        for p in ['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf','/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf']:
+            if os.path.exists(p): return ImageFont.truetype(p,s)
+        return ImageFont.load_default()
+    d.text((80,150),"Brainloop",font=f(110),fill='white')
+    d.text((84,290),"Five quick puzzles a day.",font=f(48),fill=(225,225,255))
+    d.text((84,355),"Free. No sign-up. Works offline.",font=f(40),fill=(200,200,245))
+    cols=['#22c55e','#22c55e','#facc15','#22c55e','#ef4444']
+    for i,c in enumerate(cols): d.rounded_rectangle([84+i*110,470,84+i*110+90,560],radius=20,fill=c)
+    im.save(os.path.join(OUT,'og.png'))
+og()
+urls=['','guide.html','about.html','privacy.html','learn.html']+sorted(pages)
+urls=sorted(set(urls))
+open(os.path.join(OUT,'sitemap.xml'),'w').write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>https://omarmohsen26.github.io/brainloop/%s</loc></url>'%u for u in urls)+'</urlset>')
+open(os.path.join(OUT,'robots.txt'),'w').write('User-agent: *\nAllow: /\nSitemap: https://omarmohsen26.github.io/brainloop/sitemap.xml\n')
