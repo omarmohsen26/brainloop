@@ -1,6 +1,6 @@
-const V = 'brainloop-1.4.0';
-const HTML = ["./", "index.html", "about.html", "brain-training-faq.html", "daily-puzzle-habit.html", "guide.html", "learn.html", "letter-sequences.html", "logic-puzzles.html", "mental-math.html", "mini-sudoku.html", "number-grids.html", "odd-one-out.html", "privacy.html", "sequences.html", "shape-equations.html"];
-const ASSETS = ["style.css?v=1.4.0", "gen.js?v=1.4.0", "app.js?v=1.4.0", "manifest.webmanifest", "icon-192.png", "icon-512.png", "og.png"];
+const V = 'brainloop-1.6.0';
+const HTML = ["./", "index.html", "about.html", "brain-training-faq.html", "daily-puzzle-habit.html", "guide.html", "learn.html", "letter-sequences.html", "logic-puzzles.html", "mental-math.html", "mini-sudoku.html", "missing-signs.html", "number-grids.html", "odd-one-out.html", "order-of-operations.html", "privacy.html", "sequences.html", "shape-equations.html", "solve-puzzles-faster.html"];
+const ASSETS = ["style.css?v=1.6.0", "gen.js?v=1.6.0", "app.js?v=1.6.0", "manifest.webmanifest", "icon-192.png", "icon-512.png", "og.png"];
 // Install is all-or-nothing: fetch every file fresh (bypass HTTP cache), check every page carries this version,
 // and only then swap caches. A stale CDN copy during a Pages publish makes install fail, the old cache stays, the browser retries later.
 self.addEventListener('install', e => {
@@ -10,7 +10,7 @@ self.addEventListener('install', e => {
       const r = await fetch(u, { cache: 'reload' });
       if (!r.ok) throw new Error('bad ' + u);
       const t = await r.clone().text();
-      if (t.indexOf('name="bl-version" content="1.4.0"') < 0) throw new Error('stale ' + u);
+      if (t.indexOf('name="bl-version" content="1.6.0"') < 0) throw new Error('stale ' + u);
       await c.put(u, r);
     }
     for (const u of ASSETS) {

@@ -1,7 +1,7 @@
 import os, json
 from PIL import Image, ImageDraw
 OUT = os.path.dirname(os.path.abspath(__file__))
-VERSION = "1.4.0"
+VERSION = "1.6.0"
 
 CSS = """
 :root{--bg:#f6f4ee;--ink:#1d1b2e;--mut:#5d5a70;--card:#fff;--line:#e4e0d4;--acc:#4f46e5;--acc2:#eef0ff;--ok:#16a34a;--bad:#dc2626;--half:#d9a400}
@@ -296,10 +296,40 @@ pages['daily-puzzle-habit.html'] = ('How to build a daily puzzle habit', 'Practi
 <p>Share your result card with a friend and see how you did on the same set. The colored squares do not give away the answers.</p>
 <p><a href="./">Play today's set</a></p>""")
 
+pages['missing-signs.html'] = ('Missing signs puzzles: finding the operators', 'How to solve puzzles where you pick the plus, minus or times signs that make an equation true.', """
+<p class="eyebrow">Guide</p><h1>Missing signs: find the operators</h1>
+<p>You get an equation with the signs hidden, like 4 ? 6 ? 5 = 15. Your job is to choose the signs that make it true. In Brainloop, multiplication is done before addition and subtraction, just like in school math.</p>
+<h2>Method</h2>
+<ol><li>Look at the target. Is it much bigger than the numbers? Then a times sign is likely.</li><li>Is it close to the first number? Then plus or minus with small numbers is likely.</li><li>Try the most likely choice and work it out, multiplying first.</li><li>If the result is wrong, change one sign and try again.</li></ol>
+<div class="ex"><b>Example.</b> 4 ? 6 ? 5 = 15. Try + and +: 4 + 6 + 5 = 15. It fits. Try × and +: 24 + 5 = 29, too big.</div>
+<h2>Use the answer choices</h2>
+<p>You only have four choices. Test each one quickly and cross it out. Often two of them are far off and can be dropped at once.</p>
+<h2>Hard mode</h2>
+<p>Hard mode has three signs. Do the multiplications first, then add and subtract from left to right. Write the partial result as you go.</p>
+<p>Related: <a href="order-of-operations.html">order of operations</a>. <a href="./">Try today's set</a></p>""")
+
+pages['order-of-operations.html'] = ('Order of operations explained with examples', 'A short explanation of why multiplication comes before addition, with worked examples.', """
+<p class="eyebrow">Guide</p><h1>Order of operations</h1>
+<p>When an expression mixes signs, the order matters. Multiplication happens before addition and subtraction. Brackets come first of all. Then you work left to right.</p>
+<h2>Why it matters</h2>
+<p>Take 2 + 3 × 4. If you add first you get 20. If you multiply first you get 2 + 12 = 14. The agreed answer is 14.</p>
+<h2>Steps</h2>
+<ol><li>Do anything inside brackets.</li><li>Do multiplication.</li><li>Do addition and subtraction from left to right.</li></ol>
+<div class="ex"><b>Example.</b> (14 − 6) × 2 + 14. Brackets: 8. Then 8 × 2 = 16. Then 16 + 14 = 30.</div>
+<h2>Common slip</h2>
+<p>With 10 − 4 + 3, go left to right: 6 + 3 = 9. Do not do 4 + 3 first, that gives 3, which is wrong.</p>
+<p>Related: <a href="mental-math.html">mental math</a>, <a href="missing-signs.html">missing signs</a>. <a href="./">Try today's set</a></p>""")
+
+pages['solve-puzzles-faster.html'] = ('How to solve puzzles faster: 7 habits', 'Seven simple habits that make daily logic and number puzzles quicker, with no tricks.', """
+<p class="eyebrow">Guide</p><h1>How to solve puzzles faster</h1>
+<p>Speed comes from habits, not talent. These seven work across every puzzle type in Brainloop.</p>
+<ol><li><b>Read the question twice.</b> Most wrong answers come from a misread, not a hard idea.</li><li><b>Write the first guess.</b> A rough rule you can test beats staring.</li><li><b>Check differences first.</b> In number puzzles, look at the gaps between numbers before anything else.</li><li><b>Test, do not trust.</b> Run your rule on every given number before you answer.</li><li><b>Drop choices.</b> Cross out options that are obviously off, then decide between the rest.</li><li><b>Skip and return.</b> If you are stuck for a minute, take a break and look again with fresh eyes.</li><li><b>Read the explanation.</b> After each miss, the short note teaches the pattern for next time.</li></ol>
+<p>Pick one habit per week. Practice mode lets you focus on a single puzzle type. See also <a href="daily-puzzle-habit.html">building a daily habit</a>. <a href="./">Play today's set</a></p>""")
+
 pages['learn.html'] = ('Learn: puzzle guides', 'All Brainloop puzzle guides in one place.', """
 <p class="eyebrow">Learn</p><h1>Puzzle guides</h1>
 <p>Short guides with worked examples for every puzzle type in Brainloop.</p>
-<ul><li><a href="sequences.html">Number sequences</a></li><li><a href="letter-sequences.html">Letter sequences</a></li><li><a href="logic-puzzles.html">Logic ordering</a></li><li><a href="odd-one-out.html">Odd one out</a></li><li><a href="number-grids.html">Number grids</a></li><li><a href="shape-equations.html">Shape math</a></li><li><a href="mini-sudoku.html">Mini sudoku</a></li><li><a href="mental-math.html">Mental math</a></li><li><a href="daily-puzzle-habit.html">Build a daily puzzle habit</a></li><li><a href="brain-training-faq.html">Does brain training work?</a></li></ul>""")
+<ul><li><a href="sequences.html">Number sequences</a></li><li><a href="letter-sequences.html">Letter sequences</a></li><li><a href="logic-puzzles.html">Logic ordering</a></li><li><a href="odd-one-out.html">Odd one out</a></li><li><a href="number-grids.html">Number grids</a></li><li><a href="shape-equations.html">Shape math</a></li><li><a href="mini-sudoku.html">Mini sudoku</a></li><li><a href="mental-math.html">Mental math</a></li><li><a href="missing-signs.html">Missing signs</a></li><li><a href="order-of-operations.html">Order of operations</a></li><li><a href="solve-puzzles-faster.html">Solve puzzles faster</a></li><li><a href="daily-puzzle-habit.html">Build a daily puzzle habit</a></li><li><a href="brain-training-faq.html">Does brain training work?</a></li></ul>""")
 
 for slug, (t, d, b) in pages.items():
     page(slug, t, d, b)
